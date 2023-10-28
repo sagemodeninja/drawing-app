@@ -52,40 +52,25 @@ export class ColorSlider extends CustomComponent {
         this.scaleCanvas();
         
         // Gradient
-        this._gradient = this._context.createLinearGradient(12, 0, this._control.width - 24, 0);
+        this._gradient = this._context.createLinearGradient(18, 0, this._control.width - 12, 0);
 
         this._gradient.addColorStop(0, "hsl(0 100% 50%)");
-        this._gradient.addColorStop(1 / 7, "hsl(60 100% 50%)");
-        this._gradient.addColorStop(2 / 7, "hsl(120 100% 50%)");
-        this._gradient.addColorStop(3 / 7, "hsl(180 100% 50%)");
-        this._gradient.addColorStop(4 / 7, "hsl(240 100% 50%)");
-        this._gradient.addColorStop(5 / 7, "hsl(300 100% 50%)");
+        this._gradient.addColorStop(1 / 6, "hsl(60 100% 50%)");
+        this._gradient.addColorStop(2 / 6, "hsl(120 100% 50%)");
+        this._gradient.addColorStop(3 / 6, "hsl(180 100% 50%)");
+        this._gradient.addColorStop(4 / 6, "hsl(240 100% 50%)");
+        this._gradient.addColorStop(5 / 6, "hsl(300 100% 50%)");
         this._gradient.addColorStop(1, "hsl(0 100% 50%)");
     }
 
     private addEventListeners() {
-        const handleUpdates = (x: number) => {
-            this._picking = true;
-            
-            const { left, width } = this._control.getBoundingClientRect();
-
-            x = Math.max(12, Math.min(width - 12, x - left));
-
-            const hue = Math.round(((x - 12) / (width - 24)) * 360);
-            
-            this._color.hue = hue;
-            this._normalColor.hue = hue;
-
-            this.dispatchEvent(new Event('change'));
-            this.draw(x);
-        }
-
         this._control.addEventListener('mousedown', ({ clientX }) => {
-            handleUpdates(clientX);
+            this._picking = true;    
+            this.handleInteractions(clientX);
         });
 
         document.addEventListener('mousemove', ({ clientX }) => {
-            if (this._picking) handleUpdates(clientX);
+            if (this._picking) this.handleInteractions(clientX);
         });
 
         document.addEventListener('mouseup', () => {
@@ -103,6 +88,20 @@ export class ColorSlider extends CustomComponent {
         this._control.height = height * devicePixelRatio;
         
         this._context.scale(devicePixelRatio, devicePixelRatio);
+    }
+
+    private handleInteractions (x: number) {
+        const { left, width } = this._control.getBoundingClientRect();
+
+        x = Math.max(12, Math.min(width - 12, x - left));
+
+        const hue = Math.round(((x - 12) / (width - 24)) * 360);
+        
+        this._color.hue = hue;
+        this._normalColor.hue = hue;
+
+        this.dispatchEvent(new Event('change'));
+        this.draw(x);
     }
 
     private updateColor(color: HSL) {
