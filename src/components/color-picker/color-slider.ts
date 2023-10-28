@@ -31,7 +31,7 @@ export class ColorSlider extends CustomComponent {
     }
 
     public render() {
-        return `<canvas class="control" part="control" width="200" height="18"></canvas>`
+        return `<canvas class="control" part="control" width="320" height="18"></canvas>`
     }
 
     public connectedCallback() {
@@ -47,12 +47,12 @@ export class ColorSlider extends CustomComponent {
     }
 
     private initCanvas() {
-        this._context = this.control.getContext('2d', { willReadFrequently: true });
+        this._context = this.control.getContext('2d');
         
         this.scaleCanvas();
         
         // Gradient
-        this._gradient = this._context.createLinearGradient(9, 0, this._control.width - 18, 0);
+        this._gradient = this._context.createLinearGradient(12, 0, this._control.width - 24, 0);
 
         this._gradient.addColorStop(0, "hsl(0 100% 50%)");
         this._gradient.addColorStop(1 / 7, "hsl(60 100% 50%)");
@@ -69,9 +69,9 @@ export class ColorSlider extends CustomComponent {
             
             const { left, width } = this._control.getBoundingClientRect();
 
-            x = Math.max(9, Math.min(width - 18, x - left));
+            x = Math.max(12, Math.min(width - 12, x - left));
 
-            const hue = Math.round(((x - 9) / (width - 18 - 9)) * 360);
+            const hue = Math.round(((x - 12) / (width - 24)) * 360);
             
             this._color.hue = hue;
             this._normalColor.hue = hue;
@@ -95,7 +95,7 @@ export class ColorSlider extends CustomComponent {
 
     private scaleCanvas() {
         const {devicePixelRatio} = window;
-        const { width, height } = { width: 200, height: 30 };
+        const { width, height } = { width: 320, height: 18 };
         
         this._control.style.width = width + 'px';
         this._control.style.height = height + 'px';
@@ -110,7 +110,7 @@ export class ColorSlider extends CustomComponent {
 
         this._color = color;
         this._normalColor.hue = color.hue;
-        this.draw(9 + ((color.normalize().hue / 360) * (width - 18)));
+        this.draw(12 + ((color.hue / 360) * (width - 24)));
     }
 
     private draw(position: number) {
@@ -120,7 +120,7 @@ export class ColorSlider extends CustomComponent {
         
         this._context.fillStyle = this._gradient;
         this._context.beginPath();
-        this._context.roundRect(9, 5, width - 18, 8, 4);
+        this._context.roundRect(12, 5, width - 24, 8, 4);
         this._context.fill();
 
         // Outer ball

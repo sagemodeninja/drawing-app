@@ -10,12 +10,12 @@ export class ColorPicker extends CustomComponent {
     static styles = `
         .control {
             background-color: #000;
-            border: solid 3px #fff;
+            box-shadow: 0 0 0 3px rgb(255 255 255 / 19%);
             border-radius: 5px;
-            box-sizing: border-box;
+            box-sizing: content-box;
             cursor: pointer;
-            height: 18px;
-            width: 18px;
+            height: 24px;
+            width: 24px;
         }
 
         .picker {
@@ -23,11 +23,13 @@ export class ColorPicker extends CustomComponent {
             box-shadow: 0px 8px 16px rgb(0 0 0 / 26%);
             box-sizing: border-box;
             display: none;
+            flex-direction: column;
+            gap: 16px;
             overflow: hidden;
-            padding: 8px;
+            padding: 12px 0;
             position: fixed;
             z-index: 9999;
-            width: 216px;
+            width: 320px;
         }
 
         .picker::before {
@@ -42,7 +44,53 @@ export class ColorPicker extends CustomComponent {
         }
 
         :host(.picker-shown) .picker {
-            display: initial;
+            display: flex;
+        }
+
+        .inputs {
+            display: flex;
+            justify-content: space-evenly;
+            padding: 0 12px;
+        }
+
+        .inputGroup {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .inputGroup label {
+            color: rgb(255 255 255 / 78.6%);
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        input {
+            appearance: none;
+            background-color: rgb(255 255 255 / 6.05%);
+            border: solid 1px rgb(255 255 255 / 9.3%);
+            border-radius: 5px;
+            color: #fff;
+            font-family: 'Manrope', sans-serif;
+            outline: none;
+            padding: 8px 12px;
+            text-align: center;
+            width: 32px;
+        }
+        
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+          -webkit-appearance: none;
+          margin: 0;
+        }
+        
+        /* Firefox */
+        input[type=number] {
+          -moz-appearance: textfield;
+        }
+
+        .hexInput {
+            width: 64px;
         }
     `
 
@@ -53,6 +101,9 @@ export class ColorPicker extends CustomComponent {
     private _palette: ColorPalette;
     private _slider: ColorSlider;
     private _hexInput: HTMLInputElement;
+    private _redChannelInput: HTMLInputElement;
+    private _greenChannelInput: HTMLInputElement;
+    private _blueChannelInput: HTMLInputElement;
 
     private _pickerCleanup: any;
 
@@ -62,7 +113,7 @@ export class ColorPicker extends CustomComponent {
     }
 
     public set color(value: HSL) {
-        this._color = value;
+        this.updateColor(value);
     }
 
     // DOM
@@ -90,6 +141,21 @@ export class ColorPicker extends CustomComponent {
         this._hexInput ??= this.shadowRoot.querySelector('.hexInput');
         return this._hexInput;
     }
+    
+    private get redChannelInput() {
+        this._redChannelInput ??= this.shadowRoot.querySelector('.redChannelInput');
+        return this._redChannelInput;
+    }
+    
+    private get greenChannelInput() {
+        this._greenChannelInput ??= this.shadowRoot.querySelector('.greenChannelInput');
+        return this._greenChannelInput;
+    }
+    
+    private get blueChannelInput() {
+        this._blueChannelInput ??= this.shadowRoot.querySelector('.blueChannelInput');
+        return this._blueChannelInput;
+    }
 
     public render() {
         return `
@@ -97,7 +163,24 @@ export class ColorPicker extends CustomComponent {
             <div class="picker" part="picker">
                 <color-palette class="palette" part="palette"></color-palette>
                 <color-slider class="colorSlider" part="colorSlider"></color-slider>
-                <input class="hexInput" />
+                <div class="inputs" part="inputs">
+                    <div class="inputGroup">
+                        <label>Hex</label>
+                        <input class="hexInput" />
+                    </div>
+                    <div class="inputGroup">
+                        <label>R</label>
+                        <input type="number" class="redChannelInput" />
+                    </div>
+                    <div class="inputGroup">
+                        <label>G</label>
+                        <input type="number" class="greenChannelInput" />
+                    </div>
+                    <div class="inputGroup">
+                        <label>B</label>
+                        <input type="number" class="blueChannelInput" />
+                    </div>
+                </div>
             </div>
         `
     }
@@ -123,14 +206,33 @@ export class ColorPicker extends CustomComponent {
 
         this.palette.addEventListener('change', () => {
             this.updateColor(this.palette.color);
+            this.dispatchEvent(new Event('change'));
         })
 
         this.slider.addEventListener('change', () => {
             const color = this.slider.color;
 
             this.palette.color = color;
+
             this.updateColor(color);
+            this.dispatchEvent(new Event('change'));
         })
+
+        const channelInputs = [
+            this.redChannelInput,
+            this.greenChannelInput,
+            this.blueChannelInput,
+        ];
+        
+        channelInputs.map(input => input.addEventListener('input', () => {
+            const red = parseInt(this.redChannelInput.value);
+            const green = parseInt(this.greenChannelInput.value);
+            const blue = parseInt(this.blueChannelInput.value);
+
+            this.color = HSL.fromRGB(red, green, blue);
+            this.palette.color = this.color;
+            this.slider.color = this.color;
+        }));
     }
 
     private setPickerShown(shown: boolean) {
@@ -164,9 +266,13 @@ export class ColorPicker extends CustomComponent {
 
     private updateColor(color: HSL) {
         this._color = color;
-        this.hexInput.value = color.toString();
         this.control.style.backgroundColor = color.toString();
 
-        this.dispatchEvent(new Event('change'));
+        const {red, green, blue} = color.toRGB();
+        
+        this.hexInput.value = color.toHex().toUpperCase();
+        this.redChannelInput.value = red.toString();
+        this.greenChannelInput.value = green.toString();
+        this.blueChannelInput.value = blue.toString();
     }
 }

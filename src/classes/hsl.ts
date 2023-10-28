@@ -87,61 +87,43 @@ export class HSL {
         return new HSL(hue, saturation, lightness);
     }
 
-    public toHex() {
-        // // Ensure h is in the range [0, 360), and s and l are in the range [0, 100]
-        // h = (h % 360 + 360) % 360;
-        // s = Math.min(100, Math.max(0, s));
-        // l = Math.min(100, Math.max(0, l));
-
-        // // Convert HSL to RGB
-        // s /= 100;
-        // l /= 100;
-        // const c = (1 - Math.abs(2 * l - 1)) * s;
-        // const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
-        // const m = l - c / 2;
-
-        // let r, g, b;
-        // if (h < 60) {
-        //     r = c;
-        //     g = x;
-        //     b = 0;
-        // } else if (h < 120) {
-        //     r = x;
-        //     g = c;
-        //     b = 0;
-        // } else if (h < 180) {
-        //     r = 0;
-        //     g = c;
-        //     b = x;
-        // } else if (h < 240) {
-        //     r = 0;
-        //     g = x;
-        //     b = c;
-        // } else if (h < 300) {
-        //     r = x;
-        //     g = 0;
-        //     b = c;
-        // } else {
-        //     r = c;
-        //     g = 0;
-        //     b = x;
-        // }
-
-        // // Convert RGB to HEX
-        // r = Math.round((r + m) * 255);
-        // g = Math.round((g + m) * 255);
-        // b = Math.round((b + m) * 255);
-
-        // // Convert the RGB values to HEX format
-        // const redHex = r.toString(16).padStart(2, '0');
-        // const greenHex = g.toString(16).padStart(2, '0');
-        // const blueHex = b.toString(16).padStart(2, '0');
-
-        // return `#${redHex}${greenHex}${blueHex}`;
-    }
-
     public normalize() {
         return new HSL(this.hue, 100, 50);
+    }
+
+    public toRGB() {
+        let {hue, saturation, lightness} = this;
+        
+        hue = (hue % 360 + 360) % 360;
+        saturation = Math.min(100, Math.max(0, saturation));
+        lightness = Math.min(100, Math.max(0, lightness));
+
+        saturation /= 100;
+        lightness /= 100;
+
+        const c = (1 - Math.abs(2 * lightness - 1)) * saturation;
+        const x = c * (1 - Math.abs(((hue / 60) % 2) - 1));
+        const m = lightness - c / 2;
+
+        let red = hue < 120 || hue >= 240 ? (hue > 60 && hue < 300 ? x : c) : 0;
+        let green = hue < 240 ? (hue > 60 && hue < 180 ? c : x) : 0;
+        let blue = hue > 120 ? (hue >= 180 && hue < 300 ? c : x) : 0;
+
+        red = Math.round((red + m) * 255);
+        green = Math.round((green + m) * 255);
+        blue = Math.round((blue + m) * 255);
+
+        return { red, green, blue }
+    }
+
+    public toHex() {
+        const {red, blue, green} = this.toRGB();
+
+        const redHex = red.toString(16).padStart(2, '0');
+        const greenHex = green.toString(16).padStart(2, '0');
+        const blueHex = blue.toString(16).padStart(2, '0');
+
+        return `#${redHex}${greenHex}${blueHex}`;
     }
 
     public toString() {

@@ -4,6 +4,14 @@ import { HSL } from '../../classes';
 @customComponent('color-palette')
 export class ColorPalette extends CustomComponent {
     static styles = `
+        :host {
+            padding: 0 12px;
+        }
+
+        .control {
+            border-radius: 8px;
+            overflow: hidden;
+        }
     `
 
     private _color: HSL;
@@ -31,7 +39,7 @@ export class ColorPalette extends CustomComponent {
     }
 
     public render() {
-        return `<canvas class="control" part="control" width="200" height="200"></canvas>`
+        return `<canvas class="control" part="control" width="296" height="200"></canvas>`
     }
 
     public connectedCallback() {
@@ -46,7 +54,7 @@ export class ColorPalette extends CustomComponent {
     }
 
     private initCanvas() {
-        this._context = this.control.getContext('2d', { willReadFrequently: true });
+        this._context = this.control.getContext('2d');
         
         this.scaleCanvas();
         
@@ -89,7 +97,7 @@ export class ColorPalette extends CustomComponent {
 
     private scaleCanvas() {
         const {devicePixelRatio} = window;
-        const { width, height } = { width: 200, height: 200 };
+        const { width, height } = { width: 296, height: 200 };
         
         this._control.style.width = width + 'px';
         this._control.style.height = height + 'px';
