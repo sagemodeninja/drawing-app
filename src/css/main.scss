@@ -1,0 +1,49 @@
+body {
+    height: 100vh;
+    margin: 0;
+}
+
+#drawingCanvas {
+    height: 100%;
+    position: absolute;
+    width: 100%;
+}
+
+.toolbarContainer {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+
+    & .toolbar {
+        bottom: 16px;
+        border-radius: 16px;
+        overflow: hidden;
+        padding: 16px;
+        position: absolute;
+        z-index: 99;
+
+        &::before {
+            background-color: #202020CC;
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
+            backdrop-filter: saturate(180%) blur(20px);
+            content: '';
+            inset: 0;
+            position: absolute;
+            z-index: -1;
+        }
+    }
+
+    & #loader {
+        border-radius: 50%;
+        box-sizing: border-box;
+        height: 50px;
+        width: 50px;
+
+        border: solid 11px #E8D59E;
+        border-top: solid 11px #D0AA3D;
+    }
+}
+
+svg #solidBg {
+    stroke: #D0AA3D;
+}
