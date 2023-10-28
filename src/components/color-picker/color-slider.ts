@@ -69,8 +69,11 @@ export class ColorSlider extends CustomComponent {
             this.handleInteractions(clientX);
         });
 
-        document.addEventListener('mousemove', ({ clientX }) => {
-            if (this._picking) this.handleInteractions(clientX);
+        document.addEventListener('mousemove', e => {
+            if (this._picking) {
+                e.preventDefault();
+                this.handleInteractions(e.clientX);
+            }
         });
 
         document.addEventListener('mouseup', () => {

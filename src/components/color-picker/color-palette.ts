@@ -66,28 +66,11 @@ export class ColorPalette extends CustomComponent {
     }
 
     private addEventListeners() {
-        const handleUpdate = (x: number, y: number) => {
-            this._picking = true;
+        this._control.addEventListener('mousedown', this.handleInteractions.bind(this));
 
-            const {left, top, width, height} = this._control.getBoundingClientRect();
-
-            x = Math.max(0, Math.min(width, x - left));
-            y = Math.max(0, Math.min(height, y - top));
-
-            const saturation = Math.round((x / width) * 100);
-            const lightness = Math.round(50 - ((y / height) * 50));
-
-            this.color.saturation = saturation;
-            this.color.lightness = lightness;
-
-            this.dispatchEvent(new Event('change'));
-            this.draw(x, y);
-        }
-
-        this._control.addEventListener('mousedown', ({ clientX, clientY }) => handleUpdate(clientX, clientY));
-
-        document.addEventListener('mousemove', ({ clientX, clientY }) => {
-            if (this._picking) handleUpdate(clientX, clientY);
+        document.addEventListener('mousemove', e => {
+            e.preventDefault();
+            if (this._picking) this.handleInteractions(e);
         });
 
         document.addEventListener('mouseup', () => {
@@ -105,6 +88,24 @@ export class ColorPalette extends CustomComponent {
         this._control.height = height * devicePixelRatio;
         
         this._context.scale(devicePixelRatio, devicePixelRatio);
+    }
+
+    private handleInteractions ({clientX, clientY}: MouseEvent) {
+        this._picking = true;
+
+        const {left, top, width, height} = this._control.getBoundingClientRect();
+
+        const x = Math.max(0, Math.min(width, clientX - left));
+        const y = Math.max(0, Math.min(height, clientY - top));
+
+        const saturation = Math.round((x / width) * 100);
+        const lightness = Math.round(50 - ((y / height) * 50));
+
+        this.color.saturation = saturation;
+        this.color.lightness = lightness;
+
+        this.dispatchEvent(new Event('change'));
+        this.draw(x, y);
     }
 
     private updateColor(color: HSL) {
@@ -138,14 +139,14 @@ export class ColorPalette extends CustomComponent {
         this._context.fillStyle = '#fff';
 
         this._context.beginPath();
-        this._context.arc(x, y, 8, 0, 2 * Math.PI);
+        this._context.arc(x, y, 9, 0, 2 * Math.PI);
         this._context.fill();
         
         // Inner ball
         this._context.fillStyle = this._color.toString();
 
         this._context.beginPath();
-        this._context.arc(x, y, 5, 0, 2 * Math.PI);
+        this._context.arc(x, y, 6, 0, 2 * Math.PI);
         this._context.fill();
     }
 }
