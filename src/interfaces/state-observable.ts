@@ -1,6 +1,8 @@
-import { IStateObserver } from '@/interfaces';
+export interface StateObserverCallback {
+    (property: string, state: any): void;   
+}
 
 export interface IStateObservable {
-    addObserver(observer: IStateObserver): void;
-    removeObserver(observer: IStateObserver): void;
+    subscribe(callback: StateObserverCallback): void;
+    unsubscribe(callback: StateObserverCallback): void;
 }

@@ -1,20 +1,21 @@
-import { IStateObservable, IStateObserver } from '@/interfaces';
+import { IStateObservable, StateObserverCallback } from '@/interfaces';
 
 export class StateObservable implements IStateObservable {
-    protected _observers: IStateObserver[] = [];
+    protected _observers: StateObserverCallback[] = [];
     
-    addObserver(observer: IStateObserver) {
+    subscribe(observer: StateObserverCallback) {
         this._observers.push(observer);
     }
 
-    removeObserver(observer: IStateObserver) {
+    unsubscribe(observer: StateObserverCallback) {
       const index = this._observers.indexOf(observer);
       
-      if (index !== -1)
+      if (index >= 0) {
         this._observers.splice(index, 1);
+      }
     }
 
-    stateHasChanged(property: string, value: any) {
-      this._observers.forEach(observer => observer.updateState(property, value));
+    notify(property: string, value: any) {
+      this._observers.forEach(observer => observer(property, value));
     }
 }

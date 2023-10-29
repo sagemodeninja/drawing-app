@@ -1,9 +1,11 @@
-import { HSL, Project, ProjectSettings } from '@/classes';
-import { IStateObserver } from '@/interfaces';
+import { HSL, Project, ProjectSettings, Workspace } from '@/classes';
+import { StateObserver } from '@/classes/state-observer';
 
-export class DrawingCanvas implements IStateObserver {
+export class DrawingCanvas {
     private readonly _canvas: HTMLCanvasElement;
     
+    private _workspaceObserver: StateObserver;
+    private _workspace: Workspace;
     private _project: Project;
     private _projectSettings: ProjectSettings;
     private _context: CanvasRenderingContext2D;
@@ -15,17 +17,22 @@ export class DrawingCanvas implements IStateObserver {
         this._projectSettings = project.settings;
 
         this._canvas = document.createElement('canvas');
+
         this._context = this._canvas.getContext('2d');
 
         this._canvas.classList.add('drawingCanvas');
         this._background = HSL.fromHex('#ffffff');
+
+        this.addEventListeners();
     }
 
-    public attach() {
-        const {state, workspace} = this._project;
+    public get canvas() {
+        return this._canvas;
+    }
 
-        state.addObserver(this);
-        workspace.attachCanvas(this._canvas);
+    public attach(workspace: Workspace) {
+        this._workspace = workspace;
+        this._workspaceObserver.observe(workspace);
 
         const { width, height } = this._projectSettings.canvasSize;
 
@@ -35,13 +42,26 @@ export class DrawingCanvas implements IStateObserver {
     }
 
     public detach() {
-        this._project.state.removeObserver(this);
+        // this._project.state.unsubscribe(this);
     }
 
-    public updateState(property: string, value: any) {
+    private addEventListeners() {
+        this._workspaceObserver = new StateObserver(this.observeWorkspace.bind(this));
+    }
+
+    private observeWorkspace(property: string, value: any) {
+        const { style } = this._canvas;
+
         switch(property) {
             case 'rotation':
-                this._canvas.style.transform = `translate(-50%, -50%) rotate(${value}deg)`;
+                style.transform = `translate(-50%, -50%) rotate(${value}deg)`;
+                break;
+            case 'origin':
+                const { bounds } = this._workspace;
+                const {x, y} = value.toScreen(bounds);
+                
+                style.top = y + 'px';
+                style.left = x + 'px';
                 break;
         }
     }

@@ -1,12 +1,13 @@
 import '@/styles/main.scss';
 import '@/components';
 
-import { HSL, Project } from '@/classes';
+import { HSL, Project, Size, Workspace } from '@/classes';
 import { ColorPicker } from '@/components';
 import { HEX } from './classes/colors/hex-color';
+import { DrawingCanvas } from './components/drawing-canvas';
 
 class App {
-    private readonly _workspace: HTMLDivElement;
+    private readonly _workspace: Workspace;
     // private readonly _canvas: HTMLCanvasElement;
     // private readonly _colorPicker: ColorPicker;
 
@@ -15,27 +16,32 @@ class App {
     // private _penColor: HSLColor;
 
     private _project: Project;
+    private _panning: boolean = false;
 
     constructor() {
-        this._workspace = document.getElementById('workspace') as HTMLDivElement;
+        this._workspace = new Workspace('workspace');
+
+        this.addEventListeners();
         // this._canvas = document.getElementById('drawingCanvas') as HTMLCanvasElement;
         // this._colorPicker = document.getElementById('colorPicker') as ColorPicker;
 
         // this._penColor = HSLColor.fromHex('#000000');
-        this._project = new Project(this._workspace);
-
-        const c = HEX.parse('#0f0');
-        console.log(c.toString());
     }
 
-    public init() {
-        // this._colorPicker.color = this._penColor;
-        // this.initCanvas();
-        this.addEventListeners();
-    }
+    // public init() {
+    //     this._colorPicker.color = this._penColor;
+    //     this.initCanvas();
+    // }
 
-    public start() {
-        this._project.open();
+    public open() {
+        const project = new Project();
+
+        this._project = project;
+        project.settings.canvasSize = new Size(800, 500);
+
+        this._workspace.attachProject(this._project);
+
+        project.addLayer(new DrawingCanvas(project));
     }
     
     private initCanvas() {
@@ -54,16 +60,6 @@ class App {
     }
     
     private addEventListeners() {
-        document.addEventListener('keypress', e => {
-            if (e.code.includes('Bracket')) {
-                const key = e.key.charCodeAt(0);
-                const delta = (key - 92) * 10;
-                const {state} = this._project;
-
-                state.rotation += delta;
-            }
-        })
-
         // const { left, top } = this._canvas.getBoundingClientRect();
         // let lastPoints = { x: 0, y: 0 };
         
@@ -106,6 +102,5 @@ class App {
 document.addEventListener('DOMContentLoaded', () => {
     const app = new App();
 
-    app.init();
-    app.start();
+    app.open();
 })
