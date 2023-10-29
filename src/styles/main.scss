@@ -4,6 +4,22 @@ body {
     margin: 0;
 }
 
+main {
+    height: 100%;
+    width: 100%;
+    
+    #workspace {
+        background-color: #202020;
+        inset: 0;
+        position: fixed;
+
+        .drawingCanvas {
+            position: absolute;
+            transform: translate(-50%, -50%);
+        }
+    }
+}
+
 #drawingCanvas {
     height: 100%;
     position: absolute;

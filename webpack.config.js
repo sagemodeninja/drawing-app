@@ -2,6 +2,8 @@ const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 
+const isDevelopment = process.env.NODE_ENV === 'development';
+
 module.exports = () => {
     return {
         target: 'web',
@@ -13,7 +15,9 @@ module.exports = () => {
         },
         plugins: [
             new HtmlWebpackPlugin({ template: 'public/index.html' }),
-            new MiniCssExtractPlugin(),
+            new MiniCssExtractPlugin({
+                filename : isDevelopment ? '[name].css' : '[name].[hash].css'
+            }),
         ],
         module: {
             rules: [
@@ -23,7 +27,18 @@ module.exports = () => {
                     exclude: /node_modules/,
                 },
                 {
-                    test: /\.s[ac]ss$/i,
+                    test: /\.module\.s[ac]ss$/,
+                    use: [
+                        {
+                            loader: 'css-loader',
+                            options: {  modules: true }
+                        },
+                        'sass-loader',
+                    ],
+                },
+                {
+                    test: /\.s[ac]ss$/,
+                    exclude: /\.module\.s[ac]ss$/,
                     use: [
                         MiniCssExtractPlugin.loader,
                         'css-loader',
@@ -34,6 +49,9 @@ module.exports = () => {
         },
         resolve: {
             extensions: ['.ts', '.js'],
+            alias: {
+                '@': path.resolve(__dirname, 'src'),
+            }
         },
         devServer: {
             static: {

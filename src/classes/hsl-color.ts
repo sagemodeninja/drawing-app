@@ -1,4 +1,4 @@
-export class HSL {
+export class HSLColor {
     hue: number;
     saturation: number;
     lightness: number;
@@ -18,22 +18,21 @@ export class HSL {
 
         const max = Math.max(red, green, blue);
         const min = Math.min(red, green, blue);
+        const delta = max - min;
 
         let hue: number = 0;
         let saturation: number = 0;
-        let lightness = (max - min) / 2;
+        let lightness = (max + min) / 2;
 
-        if (max != min) {
-            // Calculate the saturation (S)
-            saturation = lightness > 0.5 ? (max - min) / (2 - max - min) : (max - min) / (max + min);
+        if (delta > 0) {
+            saturation =  delta / (1 - Math.abs(2 * lightness - 1));
 
-            // Calculate the hue (H)
             if (max === red) {
-                hue = (green - blue) / (max - min);
+                hue = ((green - blue) / delta) % 6;
             } else if (max === green) {
-                hue = 2 + (blue - red) / (max - min);
+                hue = (blue - red) / delta + 2;
             } else {
-                hue = 4 + (red - green) / (max - min);
+                hue = (red - green) / delta + 4;
             }
 
             hue *= 60;
@@ -47,7 +46,7 @@ export class HSL {
         saturation = Math.round(saturation * 100);
         lightness = Math.round(lightness * 100);
 
-        return new HSL(hue, saturation, lightness);
+        return new HSLColor(hue, saturation, lightness);
     }
 
     public static fromRGB(red: number, green: number, blue: number) {
@@ -57,38 +56,37 @@ export class HSL {
 
         const max = Math.max(red, green, blue);
         const min = Math.min(red, green, blue);
+        const delta = max - min;
 
         let hue: number = 0;
         let saturation: number = 0;
         let lightness = (max + min) / 2;
 
-        if (max !== min) {
-            const delta = max - min;
-
-            saturation = lightness > 0.5 ? delta / (2 - max - min) : delta / (max + min);
+        if (delta > 0) {
+            saturation = delta / (1 - Math.abs(2 * lightness - 1));
 
             switch (max) {
                 case red:
-                    hue = ((green - blue) / delta + (green < blue ? 6 : 0)) * 60;
+                    hue = ((green - blue) / delta) % 6;
                     break;
                 case green:
-                    hue = ((blue - red) / delta + 2) * 60;
+                    hue = (blue - red) / delta + 2;
                     break;
                 case blue:
-                    hue = ((red - green) / delta + 4) * 60;
+                    hue = (red - green) / delta + 4;
                     break;
             }
         }
 
-        hue = Math.round(hue);
+        hue = Math.round(hue * 60);
         saturation = Math.round(saturation * 100);
         lightness = Math.round(lightness * 100);
 
-        return new HSL(hue, saturation, lightness);
+        return new HSLColor(hue, saturation, lightness);
     }
 
     public normalize() {
-        return new HSL(this.hue, 100, 50);
+        return new HSLColor(this.hue, 100, 50);
     }
 
     public toRGB() {
@@ -101,13 +99,13 @@ export class HSL {
         saturation /= 100;
         lightness /= 100;
 
-        const c = (1 - Math.abs(2 * lightness - 1)) * saturation;
-        const x = c * (1 - Math.abs(((hue / 60) % 2) - 1));
-        const m = lightness - c / 2;
+        const chroma = (1 - Math.abs(2 * lightness - 1)) * saturation;
+        const large = chroma * (1 - Math.abs((hue / 60) % 2 - 1));
+        const m = lightness - chroma / 2;
 
-        let red = hue < 120 || hue >= 240 ? (hue > 60 && hue < 300 ? x : c) : 0;
-        let green = hue < 240 ? (hue > 60 && hue < 180 ? c : x) : 0;
-        let blue = hue > 120 ? (hue >= 180 && hue < 300 ? c : x) : 0;
+        let red = hue < 120 || hue >= 240 ? (hue >= 60 && hue < 300 ? large : chroma) : 0;
+        let green = hue < 240 ? (hue >= 60 && hue < 180 ? chroma : large) : 0;
+        let blue = hue > 120 ? (hue >= 180 && hue < 300 ? chroma : large) : 0;
 
         red = Math.round((red + m) * 255);
         green = Math.round((green + m) * 255);

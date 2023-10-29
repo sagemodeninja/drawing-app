@@ -1,5 +1,5 @@
+import { HSLColor } from '@/classes';
 import { CustomComponent, customComponent } from '@sagemodeninja/custom-component';
-import { HSL } from '../../classes';
 
 @customComponent('color-palette')
 export class ColorPalette extends CustomComponent {
@@ -14,7 +14,7 @@ export class ColorPalette extends CustomComponent {
         }
     `
 
-    private _color: HSL;
+    private _color: HSLColor;
     
     private _control: HTMLCanvasElement;
 
@@ -28,7 +28,7 @@ export class ColorPalette extends CustomComponent {
         return this._color;
     }
 
-    public set color(value: HSL) {
+    public set color(value: HSLColor) {
         this.updateColor(value);
     }
 
@@ -108,7 +108,7 @@ export class ColorPalette extends CustomComponent {
         this.draw(x, y);
     }
 
-    private updateColor(color: HSL) {
+    private updateColor(color: HSLColor) {
         const normal = color.normalize();
         const {width, height} = this.control;
 
