@@ -1,10 +1,11 @@
 import '@/components';
 import styles from '@/styles/components.module.scss';
 
-import { HSLColor } from '@/classes';
+import { HSL } from '@/classes';
 import { ColorPalette, ColorSlider } from '@/components';
 import { CustomComponent, customComponent } from '@sagemodeninja/custom-component';
 import { autoUpdate, computePosition, offset, flip, shift } from '@floating-ui/dom';
+import { RGB } from '@/classes/colors';
 
 const classNames: Record<string, string> = styles.locals;
 
@@ -12,7 +13,7 @@ const classNames: Record<string, string> = styles.locals;
 export class ColorPicker extends CustomComponent {
     static styles = styles.toString();
 
-    private _color: HSLColor;
+    private _color: HSL;
 
     private _control: HTMLDivElement;
     private _picker: HTMLDivElement;
@@ -30,7 +31,7 @@ export class ColorPicker extends CustomComponent {
         return this._color;
     }
 
-    public set color(value: HSLColor) {
+    public set color(value: HSL) {
         this.updateColor(value);
     }
 
@@ -147,7 +148,7 @@ export class ColorPicker extends CustomComponent {
             const green = parseInt(this.greenChannelInput.value);
             const blue = parseInt(this.blueChannelInput.value);
 
-            this.updateColor(HSLColor.fromRGB(red, green, blue));
+            this.updateColor(HSL.fromRGB(new RGB(red, green, blue)));
 
             this.palette.color = this.color;
             this.slider.color = this.color;
@@ -183,11 +184,11 @@ export class ColorPicker extends CustomComponent {
         });
     }
 
-    private updateColor(color: HSLColor) {
+    private updateColor(color: HSL) {
         this._color = color;
         this.control.style.backgroundColor = color.toString();
 
-        const {red, green, blue} = color.toRGB();
+        const {red, green, blue} = RGB.fromHSL(color);
         
         this.hexInput.value = color.toHex().toUpperCase();
         this.redChannelInput.value = red.toString();

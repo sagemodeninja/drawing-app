@@ -1,4 +1,4 @@
-import { HSLColor, Project, ProjectSettings } from '@/classes';
+import { HSL, Project, ProjectSettings } from '@/classes';
 import { IStateObserver } from '@/interfaces';
 
 export class DrawingCanvas implements IStateObserver {
@@ -8,7 +8,7 @@ export class DrawingCanvas implements IStateObserver {
     private _projectSettings: ProjectSettings;
     private _context: CanvasRenderingContext2D;
 
-    private _background: HSLColor;
+    private _background: HSL;
 
     constructor(project: Project) {
         this._project = project;
@@ -18,7 +18,7 @@ export class DrawingCanvas implements IStateObserver {
         this._context = this._canvas.getContext('2d');
 
         this._canvas.classList.add('drawingCanvas');
-        this._background = HSLColor.fromHex('#ffffff');
+        this._background = HSL.fromHex('#ffffff');
     }
 
     public attach() {

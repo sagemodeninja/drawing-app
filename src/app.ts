@@ -1,8 +1,9 @@
 import '@/styles/main.scss';
 import '@/components';
 
-import { HSLColor, Project } from '@/classes';
+import { HSL, Project } from '@/classes';
 import { ColorPicker } from '@/components';
+import { HEX } from './classes/colors/hex-color';
 
 class App {
     private readonly _workspace: HTMLDivElement;
@@ -22,6 +23,9 @@ class App {
 
         // this._penColor = HSLColor.fromHex('#000000');
         this._project = new Project(this._workspace);
+
+        const c = HEX.parse('#0f0');
+        console.log(c.toString());
     }
 
     public init() {

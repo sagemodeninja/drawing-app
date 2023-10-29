@@ -1,4 +1,4 @@
-import { HSLColor } from '@/classes';
+import { HSL } from '@/classes';
 import { CustomComponent, customComponent } from '@sagemodeninja/custom-component';
 
 @customComponent('color-slider')
@@ -6,21 +6,21 @@ export class ColorSlider extends CustomComponent {
     static styles = `
     `
     
-    private _color: HSLColor;
+    private _color: HSL;
     
     private _control: HTMLCanvasElement;
     
     private _context: CanvasRenderingContext2D;
     private _gradient: CanvasGradient;
     private _picking: boolean = false;
-    private _normalColor: HSLColor;
+    private _normalColor: HSL;
     
     // States
     public get color() {
         return this._color;
     }
 
-    public set color(value: HSLColor) {
+    public set color(value: HSL) {
         this.updateColor(value);
     }
 
@@ -35,7 +35,7 @@ export class ColorSlider extends CustomComponent {
     }
 
     public connectedCallback() {
-        this._normalColor = new HSLColor(0, 100, 50);
+        this._normalColor = new HSL(0, 100, 50);
         this.initCanvas();
         this.addEventListeners();
     }
@@ -107,7 +107,7 @@ export class ColorSlider extends CustomComponent {
         this.draw(x);
     }
 
-    private updateColor(color: HSLColor) {
+    private updateColor(color: HSL) {
         const {width} = this.control;
 
         this._color = color;
