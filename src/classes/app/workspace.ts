@@ -31,6 +31,10 @@ export class Workspace extends StateObservable {
         return this._bounds;
     }
 
+    get origin() {
+        return this._origin;
+    }
+
     public attachProject(project: Project) {
         this._projectObserver.observe(project);
     }

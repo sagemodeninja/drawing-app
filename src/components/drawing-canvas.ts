@@ -4,6 +4,7 @@ import {
     Project,
     Workspace
 } from '@/classes';
+import { DrawingData, DrawingDataPoint } from '@/classes/drawing-data';
 import { StateObserver } from '@/classes/state-observer';
 
 export class DrawingCanvas {
@@ -16,6 +17,9 @@ export class DrawingCanvas {
     private _workspaceObserver: StateObserver;
     private _background: HSL;
     private _lastPoint: Point;
+
+    private _data: DrawingData[] = [];
+    private _currentData: DrawingData;
 
     constructor(project: Project) {
         this._project = project;
@@ -40,19 +44,23 @@ export class DrawingCanvas {
         this._canvas.classList.add('drawingCanvas');
         this._context = this._canvas.getContext('2d');
         
-        this.scaleCanvas();
+        this.scaleCanvas(0);
         this.drawBackground();
     }
 
-    private scaleCanvas() {
+    private scaleCanvas(zoom: number) {
         const pixelRatio = window.devicePixelRatio;
         const { width, height } = this._project.settings.canvasSize;
-        
-        this._canvas.style.width = width + 'px';
-        this._canvas.style.height = height + 'px';
+        const { style } = this._canvas;
+
+        const dw = width + zoom;
+        const dh = height + (dw - width) / dw * height;
+
+        style.width = dw + 'px';
+        style.height = dh + 'px';
         this._canvas.width = width * pixelRatio;
         this._canvas.height = height * pixelRatio;
-        
+
         this._context.scale(pixelRatio, pixelRatio);
     }
 
@@ -74,7 +82,7 @@ export class DrawingCanvas {
                 break;
             case 'origin':
                 const { bounds } = this._workspace;
-                const {x, y} = state.toScreen(bounds);
+                const { x, y } = state.toScreen(bounds);
                 
                 style.top = y + 'px';
                 style.left = x + 'px';
@@ -84,12 +92,27 @@ export class DrawingCanvas {
     }
 
     private handleZoom(zoom: number) {
-        zoom += window.devicePixelRatio;
+        const { style } = this._canvas;
+        const { bounds, origin } = this._workspace;
+        const { x, y } = origin.toScreen(bounds);
+        const { brush, canvasSize } = this._project.settings;
+        
+        const delta = zoom / 2;
+        const dy = y - delta;
+        const dx = x - (dy - y) / y * x;
 
-        this._context.save();
+        style.top = dy + 'px';
+        style.left = dx + 'px';
+
+        this.scaleCanvas(zoom);
+        
+        this._context.clearRect(0, 0, canvasSize.width, canvasSize.height);
         this.drawBackground();
-        this._context.scale(zoom, zoom);
-        this._context.restore();
+        this._data.forEach(data => {
+            data.points.forEach(point => {
+                brush.mark(this._context, point.point, point.size)
+            })
+        })
     }
 
     private handleDrawingTrigger(e: MouseEvent) {
@@ -100,6 +123,8 @@ export class DrawingCanvas {
         const toggleDrawing = () => isDrawing = !isDrawing;
 
         const cleanup = () => {
+            this._data.push(this._currentData);
+            this._currentData = null;
             this._lastPoint = null;
 
             this._canvas.removeEventListener('mousemove', handleDrawing);
@@ -108,12 +133,23 @@ export class DrawingCanvas {
             document.removeEventListener('mouseup', cleanup);
         }
 
+        const { brush } = this._project.settings;
+        this._currentData = new DrawingData(brush.id, '#000');
+
         this.handleDrawing(e);
         
         this._canvas.addEventListener('mousemove', handleDrawing);
         this._canvas.addEventListener('mouseenter', toggleDrawing);
         this._canvas.addEventListener('mouseleave', toggleDrawing);
         document.addEventListener('mouseup', cleanup);
+    }
+
+    private drawBackground() {
+        const { canvasSize } = this._project.settings;
+        const { width, height } = canvasSize;
+        
+        this._context.fillStyle = this._background.toString();
+        this._context.fillRect(0, 0, width, height);
     }
     
     private handleDrawing({ clientX, clientY }: MouseEvent) {
@@ -124,30 +160,26 @@ export class DrawingCanvas {
         const y = clientY - top;
         const point = new Point(x, y);
 
-        if (this._lastPoint) {
-            const distance = this._lastPoint.distanceTo(point);
-            const count = Math.ceil(distance / (1 / 2));
-            
-            for (let i = 0; i <= count; i++) {
-                const t = i / count;
-                const x = this._lastPoint.x + t * (point.x - this._lastPoint.x);
-                const y = this._lastPoint.y + t * (point.y - this._lastPoint.y);
-                
-                brush.mark(this._context, new Point(x, y), 1);
-            }
-        } else {
-            brush.mark(this._context, point, 1);
-        }
+        const points = this.interpolatePoints(this._lastPoint ?? point, point, 1 / 2);
+        points.forEach(point => brush.mark(this._context, point, 1));
 
-
+        this._currentData.points.push(...points.map(point => new DrawingDataPoint(1, point)));
         this._lastPoint = point;
     }
 
-    private drawBackground() {
-        const { canvasSize } = this._project.settings;
-        const { width, height } = canvasSize;
+    private interpolatePoints(start: Point, end: Point, spacing: number) {
+        const points: Point[] = [];
+        const distance = start.distanceTo(end);
+        const count = Math.ceil(distance / spacing);
         
-        this._context.fillStyle = this._background.toString();
-        this._context.fillRect(0, 0, width, height);
+        for (let i = 0; i < count; i++) {
+            const t = i / count;
+            const x = start.x + t * (end.x - start.x);
+            const y = start.y + t * (end.y - start.y);
+            
+            points.push(new Point(x, y));
+        }
+
+        return [...points, end];
     }
 }

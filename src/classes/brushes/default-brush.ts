@@ -2,7 +2,7 @@ import { IBrush } from '@/interfaces';
 import { Point } from '../point';
 
 export class DefaultBrush implements IBrush {
-    id: string;
+    id: string = 'default-brush';
 
     generateDab(position: Point, size: number): Path2D {
         const dab = new Path2D();
