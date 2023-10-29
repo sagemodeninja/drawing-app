@@ -3,6 +3,13 @@ import { Rectangle } from "./rectangle";
 export class Point {
     constructor(public x: number, public y: number) {}
 
+    distanceTo(point: Point): number {
+        const dx = this.x - point.x;
+        const dy = this.y - point.y;
+        
+        return Math.sqrt(dx * dx + dy * dy);
+    }
+
     toCartesian({width, height}: Rectangle): Point {
         const centerX = width / 2;
         const centerY = height / 2;

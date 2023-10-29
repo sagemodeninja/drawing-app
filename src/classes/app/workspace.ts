@@ -37,8 +37,9 @@ export class Workspace extends StateObservable {
     
     private addEventListeners() {
         this._projectObserver = new StateObserver(this.observeProject.bind(this));
-        document.addEventListener('keypress', this.handleRotation.bind(this))
-        document.addEventListener('keydown', this.handlePanningTrigger.bind(this))
+        document.addEventListener('keypress', this.handleRotation.bind(this));
+        document.addEventListener('wheel', this.handleZoom.bind(this));
+        document.addEventListener('keydown', this.handlePanningTrigger.bind(this));
     }
     
     private observeProject(property: string, value: any) {
@@ -75,6 +76,11 @@ export class Workspace extends StateObservable {
             this._rotation += delta;
             this.notify('rotation', this._rotation);
         }
+    }
+
+    private handleZoom(e: WheelEvent) {
+        this._zoom += e.deltaY * 0.01;
+        this.notify('zoom', this._zoom);
     }
 
     private handlePanningTrigger(e: KeyboardEvent) {

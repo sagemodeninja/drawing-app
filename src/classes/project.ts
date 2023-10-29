@@ -1,6 +1,7 @@
 import { ProjectSettings } from '@/classes';
 import { DrawingCanvas } from '@/components/drawing-canvas';
 import { StateObservable } from './state-observable';
+import { DefaultBrush } from './brushes';
 
 export class Project extends StateObservable {
     private readonly _layers: DrawingCanvas[];
@@ -17,6 +18,7 @@ export class Project extends StateObservable {
         this._layers = [];
 
         this.settings = new ProjectSettings();
+        this.settings.brush = new DefaultBrush();
     }
 
     public addLayer(layer: DrawingCanvas) {

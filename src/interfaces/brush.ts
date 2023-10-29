@@ -1,5 +1,7 @@
+import { Point, Size } from '@/classes';
+
 export interface IBrush {
     id: string;
-    generateDab(): Path2D;
-    mark(): void;
+    generateDab(position: Point, size: number): Path2D;
+    mark(context: CanvasRenderingContext2D, position: Point, size: number): void;
 }
