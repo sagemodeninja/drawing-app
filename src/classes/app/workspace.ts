@@ -92,6 +92,7 @@ export class Workspace extends StateObservable {
             const delta = (key - 92) * 10;
 
             this._rotation += delta;
+            this._rotation = (this._rotation % 360 + 360) % 360;
             this.notify('rotation', this._rotation);
         }
     }
@@ -104,6 +105,8 @@ export class Workspace extends StateObservable {
             this._zoomDebouncer = setTimeout(() => this.setZooming(false), 200);
 
             this._zoomFactor += e.deltaY * -0.001;
+            this._zoomFactor = Math.max(0.25, Math.min(3, this._zoomFactor));
+
             this.setZooming(true, e.deltaY);
             this.notify('zoom', this._zoomFactor);
         }

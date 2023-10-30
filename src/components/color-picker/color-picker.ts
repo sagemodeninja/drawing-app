@@ -80,6 +80,7 @@ export class ColorPicker extends CustomComponent {
         return `
             <div class="control ${classNames.control}" part="control"></div>
             <div class="picker ${classNames.picker}" part="picker">
+                <div class="pointer ${classNames.pointer}" part="pointer"></div>
                 <color-palette class="palette" part="palette"></color-palette>
                 <color-slider class="colorSlider" part="colorSlider"></color-slider>
                 <div class="inputs ${classNames.inputs}" part="inputs">
@@ -175,7 +176,7 @@ export class ColorPicker extends CustomComponent {
     private updateMenuPosition() {
         computePosition(this.control, this.picker, {
             placement: 'top',
-            middleware: [offset(8), flip(), shift()],
+            middleware: [offset(16), flip(), shift()],
         }).then(({ x, y }) => {
             Object.assign(this.picker.style, {
                 left: x + 'px',

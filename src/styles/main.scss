@@ -11,20 +11,20 @@ main {
     
     #workspace {
         background-color: #282828;
+        background-image: radial-gradient(#FFFFFF26 1px, transparent 0);
+        background-size: 32px 32px;
+        background-position: -19px -19px;
         inset: 0;
         position: fixed;
 
         .drawingCanvas {
+            border-radius: 8px;
+            box-shadow: 0px 8px 16px rgb(0 0 0 / 26%);
             cursor: url(../assets/cursors/dot.cur), auto;
+            overflow: hidden;
             position: absolute;
         }
     }
-}
-
-#drawingCanvas {
-    height: 100%;
-    position: absolute;
-    width: 100%;
 }
 
 .toolbarContainer {
@@ -41,7 +41,7 @@ main {
         z-index: 99;
 
         &::before {
-            background-color: #202020CC;
+            background-color: #1E1E1EE6;
             -webkit-backdrop-filter: saturate(180%) blur(20px);
             backdrop-filter: saturate(180%) blur(20px);
             content: '';
