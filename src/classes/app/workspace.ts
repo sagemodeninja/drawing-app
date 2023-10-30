@@ -9,7 +9,7 @@ export class Workspace extends StateObservable {
     
     private _bounds: Rectangle;
     private _rotation: number = 0;
-    private _zoom: number = 0;
+    private _zoomFactor: number = 1;
     private _origin: Point = new Point(0, 0);
     
     private _projectObserver: StateObserver;
@@ -31,8 +31,8 @@ export class Workspace extends StateObservable {
         return this._bounds;
     }
 
-    get origin() {
-        return this._origin;
+    get zoomFactor() {
+        return this._zoomFactor;
     }
 
     public attachProject(project: Project) {
@@ -42,7 +42,7 @@ export class Workspace extends StateObservable {
     private addEventListeners() {
         this._projectObserver = new StateObserver(this.observeProject.bind(this));
         document.addEventListener('keypress', this.handleRotation.bind(this));
-        document.addEventListener('wheel', this.handleZoom.bind(this));
+        document.addEventListener('wheel', this.handleZoom.bind(this), { passive: false });
         document.addEventListener('keydown', this.handlePanningTrigger.bind(this));
     }
     
@@ -83,8 +83,12 @@ export class Workspace extends StateObservable {
     }
 
     private handleZoom(e: WheelEvent) {
-        this._zoom += e.deltaY * 0.01;
-        this.notify('zoom', this._zoom);
+        if (e.ctrlKey) {
+            e.preventDefault();
+
+            this._zoomFactor += e.deltaY * -0.001;
+            this.notify('zoom', this._zoomFactor);
+        }
     }
 
     private handlePanningTrigger(e: KeyboardEvent) {

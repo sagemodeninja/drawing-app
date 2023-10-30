@@ -44,74 +44,65 @@ export class DrawingCanvas {
         this._canvas.classList.add('drawingCanvas');
         this._context = this._canvas.getContext('2d');
         
-        this.scaleCanvas(0);
+        this.scaleCanvas(1);
         this.drawBackground();
     }
 
-    private scaleCanvas(zoom: number) {
-        const pixelRatio = window.devicePixelRatio;
+    private addEventListeners() {
+        this._workspaceObserver = new StateObserver(this.observeWorkspace.bind(this));
+        this._canvas.addEventListener('mousedown', this.handleDrawingTrigger.bind(this));
+    }
+
+    private scaleCanvas(zoomFactor: number) {
+        const pixelRatio = window.devicePixelRatio * zoomFactor;
         const { width, height } = this._project.settings.canvasSize;
         const { style } = this._canvas;
 
-        const dw = width + zoom;
-        const dh = height + (dw - width) / dw * height;
-
-        style.width = dw + 'px';
-        style.height = dh + 'px';
+        style.width = (width * zoomFactor) + 'px';
+        style.height = (height * zoomFactor) + 'px';
         this._canvas.width = width * pixelRatio;
         this._canvas.height = height * pixelRatio;
 
         this._context.scale(pixelRatio, pixelRatio);
     }
 
-    private addEventListeners() {
-        this._workspaceObserver = new StateObserver(this.observeWorkspace.bind(this));
-        this._canvas.addEventListener('mousedown', this.handleDrawingTrigger.bind(this));
-
-        // this._colorPicker.addEventListener('change', () => {
-        //     this._penColor = this._colorPicker.color;
-        // })
-    }
-
     private observeWorkspace(property: string, state: any) {
-        const { style } = this._canvas;
-
         switch(property) {
-            case 'rotation':
-                style.transform = `translate(-50%, -50%) rotate(${state}deg)`;
-                break;
-            case 'origin':
-                const { bounds } = this._workspace;
-                const { x, y } = state.toScreen(bounds);
-                
-                style.top = y + 'px';
-                style.left = x + 'px';
-                break;
+            case 'rotation': this.handleRotation(state); break;
+            case 'origin': this.handlePanning(state); break;
             case 'zoom': this.handleZoom(state); break;
         }
     }
 
-    private handleZoom(zoom: number) {
-        const { style } = this._canvas;
-        const { bounds, origin } = this._workspace;
-        const { x, y } = origin.toScreen(bounds);
-        const { brush, canvasSize } = this._project.settings;
-        
-        const delta = zoom / 2;
-        const dy = y - delta;
-        const dx = x - (dy - y) / y * x;
+    private handleRotation(angle: number) {
+        this._canvas.style.transform = `translate(-50%, -50%) rotate(${angle}deg)`;
+    }
 
-        style.top = dy + 'px';
-        style.left = dx + 'px';
+    private handlePanning(origin: Point) {
+        const { bounds } = this._workspace;
+        const { x, y } = origin.toScreen(bounds);
+        const { style } = this._canvas;
+        
+        style.top = y + 'px';
+        style.left = x + 'px';
+    }
+
+    private handleZoom(zoom: number) {
+        const { brush, canvasSize } = this._project.settings;
 
         this.scaleCanvas(zoom);
         
         this._context.clearRect(0, 0, canvasSize.width, canvasSize.height);
+
         this.drawBackground();
+
         this._data.forEach(data => {
-            data.points.forEach(point => {
-                brush.mark(this._context, point.point, point.size)
-            })
+            const path = new Path2D();
+
+            data.points.forEach(({point, size}) => brush.createDab(point, size * zoom, path));
+
+            this._context.fillStyle = '#000';
+            this._context.fill(path);
         })
     }
 
@@ -155,13 +146,16 @@ export class DrawingCanvas {
     private handleDrawing({ clientX, clientY }: MouseEvent) {
         const { brush } = this._project.settings;
         const { left, top } = this._canvas.getBoundingClientRect();
-    
-        const x = clientX - left;
-        const y = clientY - top;
+        const { zoomFactor } = this._workspace;
+
+        const x = (clientX - left) / zoomFactor;
+        const y = (clientY - top) / zoomFactor;
+
+        const size = zoomFactor;
         const point = new Point(x, y);
 
-        const points = this.interpolatePoints(this._lastPoint ?? point, point, 1 / 2);
-        points.forEach(point => brush.mark(this._context, point, 1));
+        const points = this.interpolatePoints(this._lastPoint ?? point, point, size / 2);
+        points.forEach(point => brush.mark(this._context, point, size));
 
         this._currentData.points.push(...points.map(point => new DrawingDataPoint(1, point)));
         this._lastPoint = point;

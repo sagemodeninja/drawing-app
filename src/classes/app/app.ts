@@ -34,5 +34,9 @@ export class App {
         project.addLayer(new DrawingCanvas(project));
     }
     
-    private addEventListeners() {}
+    private addEventListeners() {
+        // this._colorPicker.addEventListener('change', () => {
+        //     this._penColor = this._colorPicker.color;
+        // })
+    }
 }
