@@ -5,10 +5,7 @@ import { HSL } from '../colors';
 export abstract class BaseBrush implements IBrush {
     abstract id: string;
     
-    constructor(public size: number, public color: HSL) {
-        this.size = size;
-        this.color = color;
-    }
+    constructor(public size: number, public color: HSL) {}
 
     abstract createDab(position: Point, size: number, path?: Path2D): Path2D;
     

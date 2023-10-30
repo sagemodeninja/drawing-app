@@ -2,7 +2,7 @@ import '@/styles/main.scss';
 import '@/components';
 
 import { HSL, Project, Size, Workspace } from '@/classes';
-import { DrawingCanvas } from '@/components/drawing-canvas';
+import { CanvasLayer } from '@/classes/canvas-layer';
 import { ColorPicker } from '@/components';
 import { DefaultBrush } from '../brushes';
 
@@ -29,7 +29,7 @@ export class App {
         this._project = project;
         this._workspace.attachProject(this._project);
 
-        project.addLayer(new DrawingCanvas(project));
+        project.addLayer(new CanvasLayer(project));
     }
     
     private addEventListeners() {

@@ -1,24 +1,24 @@
 import { Size } from '@/classes';
-import { DrawingCanvas } from '@/components/drawing-canvas';
+import { CanvasLayer } from '@/classes/canvas-layer';
 import { StateObservable } from './state-observable';
 import { IBrush } from '@/interfaces';
 
 export class Project extends StateObservable {
-    private readonly _layers: DrawingCanvas[] = [];
+    private readonly _layers: CanvasLayer[] = [];
     
-    canvasSize: Size;
-    brush: IBrush;
+    public canvasSize: Size;
+    public brush: IBrush;
 
     get layers() {
         return this._layers;
     }
 
-    public addLayer(layer: DrawingCanvas) {
+    public addLayer(layer: CanvasLayer) {
         this._layers.push(layer);
         this.notify('layer', { action: 'add', layer });
     }
 
-    public removeLayer(layer: DrawingCanvas) {
+    public removeLayer(layer: CanvasLayer) {
       const index = this._layers.indexOf(layer);
       
       if (index > -1) {

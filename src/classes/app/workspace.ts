@@ -1,6 +1,6 @@
 import { Point, Project } from '@/classes';
 import { Rectangle } from '@/classes/rectangle';
-import { DrawingCanvas } from '@/components/drawing-canvas';
+import { CanvasLayer } from '@/classes/canvas-layer';
 import { StateObserver } from '../state-observer';
 import { StateObservable } from '../state-observable';
 
@@ -67,7 +67,7 @@ export class Workspace extends StateObservable {
         }
     }
 
-    private manageLayers(state: { action: string, layer: DrawingCanvas }) {
+    private manageLayers(state: { action: string, layer: CanvasLayer }) {
         const { action, layer } = state;
 
         if (action === 'add') {
@@ -105,7 +105,7 @@ export class Workspace extends StateObservable {
             this._zoomDebouncer = setTimeout(() => this.setZooming(false), 200);
 
             this._zoomFactor += e.deltaY * -0.001;
-            this._zoomFactor = Math.max(0.25, Math.min(3, this._zoomFactor));
+            this._zoomFactor = Math.max(0.3, Math.min(3, this._zoomFactor));
 
             this.setZooming(true, e.deltaY);
             this.notify('zoom', this._zoomFactor);
@@ -159,6 +159,8 @@ export class Workspace extends StateObservable {
     }
 
     private setZooming(zooming: boolean, delta?: number) {
+        if (zooming === this._zooming) return;
+
         const cursor = delta > 0 ? 'zoom-out' : 'zoom-in';
 
         this._zooming = zooming;

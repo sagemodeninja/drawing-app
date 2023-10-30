@@ -2,18 +2,20 @@ import {
     HSL,
     Point,
     Project,
-    Rectangle,
     Workspace
 } from '@/classes';
 import { DrawingData, DrawingDataPoint } from '@/classes/drawing-data';
 import { StateObserver } from '@/classes/state-observer';
+import { DefaultBrush } from './brushes';
 
-export class DrawingCanvas {
+export class CanvasLayer {
     private readonly _canvas: HTMLCanvasElement;
+    private readonly _bufferCanvas: HTMLCanvasElement;
     
     private _workspace: Workspace;
     private _project: Project;
     private _context: CanvasRenderingContext2D;
+    private _bufferContext: CanvasRenderingContext2D;
     
     private _workspaceObserver: StateObserver;
     private _background: HSL;
@@ -27,6 +29,7 @@ export class DrawingCanvas {
         this._background = HSL.fromHex('#ffffff');
 
         this._canvas = document.createElement('canvas');
+        this._bufferCanvas = document.createElement('canvas');
         
         this.initCanvas();
         this.addEventListeners();
@@ -43,9 +46,13 @@ export class DrawingCanvas {
 
     private initCanvas() {
         this._canvas.classList.add('drawingCanvas');
+
         this._context = this._canvas.getContext('2d');
+        this._bufferContext = this._bufferCanvas.getContext('2d');
         
-        this.scaleCanvas(1);
+        this.scaleCanvas(this._context, 1);
+        this.scaleCanvas(this._bufferContext, 1);
+
         this.drawBackground();
     }
 
@@ -54,26 +61,24 @@ export class DrawingCanvas {
         this._canvas.addEventListener('mousedown', this.handleDrawingTrigger.bind(this));
     }
 
-    private scaleCanvas(zoomFactor: number) {
-        const pixelRatio = window.devicePixelRatio * zoomFactor;
+    private scaleCanvas(context: CanvasRenderingContext2D, zoomFactor: number) {
+        const canvas = context.canvas;
         const { width, height } = this._project.canvasSize;
-        const { style } = this._canvas;
+        const pixelRatio = window.devicePixelRatio * zoomFactor;
 
-        style.width = (width * zoomFactor) + 'px';
-        style.height = (height * zoomFactor) + 'px';
-        this._canvas.width = width * pixelRatio;
-        this._canvas.height = height * pixelRatio;
+        canvas.style.width = (width * zoomFactor) + 'px';
+        canvas.style.height = (height * zoomFactor) + 'px';
+        canvas.width = width * pixelRatio;
+        canvas.height = height * pixelRatio;
 
-        this._context.scale(pixelRatio, pixelRatio);
+        context.scale(pixelRatio, pixelRatio);
     }
 
     private observeWorkspace(property: string, state: any) {
         switch(property) {
             case 'rotation': this.handleRotation(state); break;
-            case 'zooming':
-            case 'panning':
-                this._canvas.style.pointerEvents = state ? 'none' : 'auto';
-                break;
+            case 'zooming': this.handleZooming(state); break;
+            case 'panning': this._canvas.style.pointerEvents = state ? 'none' : 'auto'; break;
             case 'origin': this.handlePanning(state); break;
             case 'zoom': this.handleZoom(state); break;
         }
@@ -96,25 +101,39 @@ export class DrawingCanvas {
         style.left = left + 'px'; 
     }
 
+    private handleZooming(state: boolean) {
+        this._canvas.style.pointerEvents = state ? 'none' : 'auto';
+
+        if (state) {
+            const { width: sWidth, height: sHeight } = this._canvas;
+            const { width: dWidth, height: dHeight } = this._bufferCanvas;
+
+            this._bufferContext.drawImage(this._canvas, 0, 0, sWidth, sHeight, 0, 0, dWidth, dHeight);
+        } else {
+            this.drawBackground();
+
+            this._data.forEach(data => {
+                const brush = new DefaultBrush(1, HSL.fromHex(data.color));
+
+                data.points.slice(1).forEach((point, index) => {
+                    const lastPoint = data.points[index].point;
+                    const points = this.interpolatePoints(lastPoint, point.point, point.size / 5);
+
+                    points.forEach(point => brush.mark(this._context, point));
+                });
+            })
+        }
+    }
+
     private handleZoom(zoom: number) {
         const { origin } = this._workspace;
-        const { brush, canvasSize } = this._project;
+        const { width, height } = this._project.canvasSize;
 
-        this.scaleCanvas(zoom);
+        this.scaleCanvas(this._context, zoom);
         this.handlePanning(origin);
         
-        this._context.clearRect(0, 0, canvasSize.width, canvasSize.height);
-
-        this.drawBackground();
-
-        this._data.forEach(data => {
-            const path = new Path2D();
-
-            data.points.forEach(({point, size}) => brush.createDab(point, size * zoom, path));
-
-            this._context.fillStyle = data.color;
-            this._context.fill(path);
-        })
+        this._context.clearRect(0, 0, width, height);
+        this._context.drawImage(this._bufferCanvas, 0, 0);
     }
 
     private handleDrawingTrigger(e: MouseEvent) {
@@ -139,7 +158,7 @@ export class DrawingCanvas {
         }
 
         const { brush } = this._project;
-        this._currentData = new DrawingData(brush.id, brush.color.toString());
+        this._currentData = new DrawingData(brush.id, brush.color.toHex());
 
         this.handleDrawing(e);
         
@@ -186,11 +205,12 @@ export class DrawingCanvas {
 
         const size = brush.size * zoomFactor;
         const point = new Point(x, y);
-        const points = this.interpolatePoints(this._lastPoint ?? point, point, size / 2);
+        const points = this.interpolatePoints(this._lastPoint ?? point, point, size / 5);
 
         points.forEach(point => brush.mark(this._context, point));
 
-        this._currentData.points.push(...points.map(point => new DrawingDataPoint(size, point)));
+        const dataPoint = new DrawingDataPoint(brush.size, point);
+        this._currentData.points.push(dataPoint);
         this._lastPoint = point;
     }
 
