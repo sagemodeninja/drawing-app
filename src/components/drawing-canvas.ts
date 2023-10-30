@@ -2,6 +2,7 @@ import {
     HSL,
     Point,
     Project,
+    Rectangle,
     Workspace
 } from '@/classes';
 import { DrawingData, DrawingDataPoint } from '@/classes/drawing-data';
@@ -69,28 +70,38 @@ export class DrawingCanvas {
     private observeWorkspace(property: string, state: any) {
         switch(property) {
             case 'rotation': this.handleRotation(state); break;
+            case 'zooming':
+            case 'panning':
+                this._canvas.style.pointerEvents = state ? 'none' : 'auto';
+                break;
             case 'origin': this.handlePanning(state); break;
             case 'zoom': this.handleZoom(state); break;
         }
     }
 
     private handleRotation(angle: number) {
-        this._canvas.style.transform = `translate(-50%, -50%) rotate(${angle}deg)`;
+        this._canvas.style.transform = `rotate(${angle}deg)`;
     }
 
     private handlePanning(origin: Point) {
-        const { bounds } = this._workspace;
+        const { canvasSize } = this._project.settings;
+        const { bounds, zoomFactor } = this._workspace;
         const { x, y } = origin.toScreen(bounds);
         const { style } = this._canvas;
+
+        const top = y - (canvasSize.height * zoomFactor) / 2;
+        const left = x - (canvasSize.width * zoomFactor) / 2;
         
-        style.top = y + 'px';
-        style.left = x + 'px';
+        style.top = top + 'px'; 
+        style.left = left + 'px'; 
     }
 
     private handleZoom(zoom: number) {
+        const { origin } = this._workspace;
         const { brush, canvasSize } = this._project.settings;
 
         this.scaleCanvas(zoom);
+        this.handlePanning(origin);
         
         this._context.clearRect(0, 0, canvasSize.width, canvasSize.height);
 
@@ -111,8 +122,11 @@ export class DrawingCanvas {
 
         const handleDrawing = (e) => isDrawing && this.handleDrawing(e);
         
-        const toggleDrawing = () => isDrawing = !isDrawing;
-
+        const toggleDrawing = () => {
+            this._lastPoint = null;
+            isDrawing = !isDrawing
+        };
+ 
         const cleanup = () => {
             this._data.push(this._currentData);
             this._currentData = null;
@@ -144,17 +158,36 @@ export class DrawingCanvas {
     }
     
     private handleDrawing({ clientX, clientY }: MouseEvent) {
-        const { brush } = this._project.settings;
-        const { left, top } = this._canvas.getBoundingClientRect();
-        const { zoomFactor } = this._workspace;
+        const { canvasSize, brush } = this._project.settings;
+        const { bounds, rotation, zoomFactor, origin } = this._workspace;
 
-        const x = (clientX - left) / zoomFactor;
-        const y = (clientY - top) / zoomFactor;
+        const rotatePoint = (angle) => {
+            const { x: centerX, y: centerY } = origin.toScreen(bounds);
+
+            const gx = (clientX - centerX) / zoomFactor;
+            const gy = (clientY - centerY) / zoomFactor;
+
+            const radians = angle * (Math.PI / 180);
+
+            const sin = Math.sin(radians);
+            const cos = Math.cos(radians);
+            let x = (gx * cos) + (gy * sin);
+            let y = (-gx * sin) + (gy * cos);
+    
+            x = Math.floor(x * 100) / 100;
+            y = Math.floor(y * 100) / 100;
+        
+            return new Point(x, y);
+        }
+
+        const { x: rotatedX, y: rotatedY } = rotatePoint(rotation);
+        const x = rotatedX + canvasSize.width / 2;
+        const y = rotatedY + canvasSize.height / 2;
 
         const size = zoomFactor;
         const point = new Point(x, y);
-
         const points = this.interpolatePoints(this._lastPoint ?? point, point, size / 2);
+
         points.forEach(point => brush.mark(this._context, point, size));
 
         this._currentData.points.push(...points.map(point => new DrawingDataPoint(1, point)));

@@ -12,7 +12,11 @@ export class Workspace extends StateObservable {
     private _zoomFactor: number = 1;
     private _origin: Point = new Point(0, 0);
     
+    private _project: Project;
     private _projectObserver: StateObserver;
+
+    private _zooming: boolean;
+    private _zoomDebouncer: any;
     private _panning: boolean;
 
     constructor(selector: string) {
@@ -31,11 +35,20 @@ export class Workspace extends StateObservable {
         return this._bounds;
     }
 
+    get rotation() {
+        return this._rotation;
+    }
+
     get zoomFactor() {
         return this._zoomFactor;
     }
 
+    get origin() {
+        return this._origin;
+    }
+
     public attachProject(project: Project) {
+        this._project = project;
         this._projectObserver.observe(project);
     }
     
@@ -64,10 +77,11 @@ export class Workspace extends StateObservable {
     }
 
     private attachCanvas(canvas: HTMLCanvasElement) {
-        const {x, y} = this._origin.toScreen(this._bounds);
+        const { x, y } = this._origin.toScreen(this._bounds);
+        const { width, height } = this._project.settings.canvasSize;
         
-        canvas.style.top = y + 'px';
-        canvas.style.left = x + 'px';
+        canvas.style.left = (x - width / 2) + 'px';
+        canvas.style.top = (y - height / 2) + 'px';
 
         this._self.append(canvas);
     }
@@ -86,20 +100,24 @@ export class Workspace extends StateObservable {
         if (e.ctrlKey) {
             e.preventDefault();
 
+            clearTimeout(this._zoomDebouncer);
+            this._zoomDebouncer = setTimeout(() => this.setZooming(false), 200);
+
             this._zoomFactor += e.deltaY * -0.001;
+            this.setZooming(true, e.deltaY);
             this.notify('zoom', this._zoomFactor);
         }
     }
 
     private handlePanningTrigger(e: KeyboardEvent) {
         if (e.code === 'Space' && !this._panning) {
-            this._panning = true;
+            this.setPanning(true);
 
             const handlePanning = this.handlePanning.bind(this);
 
             const cleanup = e => {
                 if (e.code === 'Space') {
-                    this._panning = false;
+                    this.setPanning(false);
 
                     document.removeEventListener('mousedown', handlePanning);
                     document.removeEventListener('keyup', cleanup);
@@ -124,14 +142,30 @@ export class Workspace extends StateObservable {
             origin.y = startY - deltaY;
             
             this.notify('origin', origin);
-        }
+        } 
 
         const cleanup = () => {
+            this._self.style.cursor = this._panning ? 'grab' : 'initial'; 
             document.removeEventListener('mousemove', handlePanning);
             document.removeEventListener('mouseup', cleanup);
         }
 
+        this._self.style.cursor = 'grabbing'; 
         document.addEventListener('mousemove', handlePanning);
         document.addEventListener('mouseup', cleanup);
+    }
+
+    private setZooming(zooming: boolean, delta?: number) {
+        const cursor = delta > 0 ? 'zoom-in' : 'zoom-out';
+
+        this._zooming = zooming;
+        this._self.style.cursor = zooming ? cursor : 'initial';
+        this.notify('zooming', zooming);
+    }
+
+    private setPanning(panning: boolean) {  
+        this._panning = panning;
+        this._self.style.cursor = panning ? 'grab' : 'initial';
+        this.notify('panning', panning);
     }
 }

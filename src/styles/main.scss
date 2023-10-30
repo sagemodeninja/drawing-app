@@ -15,8 +15,8 @@ main {
         position: fixed;
 
         .drawingCanvas {
+            cursor: url(../assets/cursors/dot.cur), auto;
             position: absolute;
-            transform: translate(-50%, -50%);
         }
     }
 }
