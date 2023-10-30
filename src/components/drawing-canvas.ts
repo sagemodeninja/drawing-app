@@ -56,7 +56,7 @@ export class DrawingCanvas {
 
     private scaleCanvas(zoomFactor: number) {
         const pixelRatio = window.devicePixelRatio * zoomFactor;
-        const { width, height } = this._project.settings.canvasSize;
+        const { width, height } = this._project.canvasSize;
         const { style } = this._canvas;
 
         style.width = (width * zoomFactor) + 'px';
@@ -84,7 +84,7 @@ export class DrawingCanvas {
     }
 
     private handlePanning(origin: Point) {
-        const { canvasSize } = this._project.settings;
+        const { canvasSize } = this._project;
         const { bounds, zoomFactor } = this._workspace;
         const { x, y } = origin.toScreen(bounds);
         const { style } = this._canvas;
@@ -98,7 +98,7 @@ export class DrawingCanvas {
 
     private handleZoom(zoom: number) {
         const { origin } = this._workspace;
-        const { brush, canvasSize } = this._project.settings;
+        const { brush, canvasSize } = this._project;
 
         this.scaleCanvas(zoom);
         this.handlePanning(origin);
@@ -112,7 +112,7 @@ export class DrawingCanvas {
 
             data.points.forEach(({point, size}) => brush.createDab(point, size * zoom, path));
 
-            this._context.fillStyle = '#000';
+            this._context.fillStyle = data.color;
             this._context.fill(path);
         })
     }
@@ -138,8 +138,8 @@ export class DrawingCanvas {
             document.removeEventListener('mouseup', cleanup);
         }
 
-        const { brush } = this._project.settings;
-        this._currentData = new DrawingData(brush.id, '#000');
+        const { brush } = this._project;
+        this._currentData = new DrawingData(brush.id, brush.color.toString());
 
         this.handleDrawing(e);
         
@@ -150,7 +150,7 @@ export class DrawingCanvas {
     }
 
     private drawBackground() {
-        const { canvasSize } = this._project.settings;
+        const { canvasSize } = this._project;
         const { width, height } = canvasSize;
         
         this._context.fillStyle = this._background.toString();
@@ -158,7 +158,7 @@ export class DrawingCanvas {
     }
     
     private handleDrawing({ clientX, clientY }: MouseEvent) {
-        const { canvasSize, brush } = this._project.settings;
+        const { canvasSize, brush } = this._project;
         const { bounds, rotation, zoomFactor, origin } = this._workspace;
 
         const rotatePoint = (angle) => {
@@ -184,13 +184,13 @@ export class DrawingCanvas {
         const x = rotatedX + canvasSize.width / 2;
         const y = rotatedY + canvasSize.height / 2;
 
-        const size = zoomFactor;
+        const size = brush.size * zoomFactor;
         const point = new Point(x, y);
         const points = this.interpolatePoints(this._lastPoint ?? point, point, size / 2);
 
-        points.forEach(point => brush.mark(this._context, point, size));
+        points.forEach(point => brush.mark(this._context, point));
 
-        this._currentData.points.push(...points.map(point => new DrawingDataPoint(1, point)));
+        this._currentData.points.push(...points.map(point => new DrawingDataPoint(size, point)));
         this._lastPoint = point;
     }
 

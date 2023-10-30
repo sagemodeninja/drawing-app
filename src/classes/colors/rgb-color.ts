@@ -33,6 +33,6 @@ export class RGB {
         green = Math.round((green + m) * 255);
         blue = Math.round((blue + m) * 255);
 
-        return new RGB(red, green, blue);
+        return new this(red, green, blue);
     }
 }

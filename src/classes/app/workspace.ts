@@ -78,7 +78,7 @@ export class Workspace extends StateObservable {
 
     private attachCanvas(canvas: HTMLCanvasElement) {
         const { x, y } = this._origin.toScreen(this._bounds);
-        const { width, height } = this._project.settings.canvasSize;
+        const { width, height } = this._project.canvasSize;
         
         canvas.style.left = (x - width / 2) + 'px';
         canvas.style.top = (y - height / 2) + 'px';
@@ -156,7 +156,7 @@ export class Workspace extends StateObservable {
     }
 
     private setZooming(zooming: boolean, delta?: number) {
-        const cursor = delta > 0 ? 'zoom-in' : 'zoom-out';
+        const cursor = delta > 0 ? 'zoom-out' : 'zoom-in';
 
         this._zooming = zooming;
         this._self.style.cursor = zooming ? cursor : 'initial';

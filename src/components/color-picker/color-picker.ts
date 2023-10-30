@@ -13,7 +13,7 @@ const classNames: Record<string, string> = styles.locals;
 export class ColorPicker extends CustomComponent {
     static styles = styles.toString();
 
-    private _color: HSL;
+    private _color: HSL = new HSL(0, 0, 0);
 
     private _control: HTMLDivElement;
     private _picker: HTMLDivElement;
@@ -159,8 +159,8 @@ export class ColorPicker extends CustomComponent {
         this.picker.classList.toggle(classNames.active, shown);
         
         if (shown) {
-            this.palette.color = this.color;
-            this.slider.color = this.color;
+            this.palette.color = this._color;
+            this.slider.color = this._color;
 
             this._pickerCleanup = autoUpdate(
                 this.control,
