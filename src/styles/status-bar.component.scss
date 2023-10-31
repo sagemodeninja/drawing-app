@@ -5,7 +5,7 @@
 
     align-items: center;
     display: flex;
-    gap: 16px;
+    gap: 12px;
     height: 24px;
     inset: auto 0;
     margin: 16px auto;    
@@ -27,5 +27,24 @@
         height: 18px;
         transition: fill 0.1s;
         width: 18px;
+    }
+
+    & span {
+        background-color: rgb(255 255 255 / 3%);
+        border-radius: 8px;
+        box-sizing: border-box;
+        padding: 2px 6px;
+    }
+
+    & .zoomFactor {
+        width: 56px;
+    }
+
+    & .rotation {
+        width: 42px;
+    }
+
+    & .origin {
+        width: 128px;
     }
 }
