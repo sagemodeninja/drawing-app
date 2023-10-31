@@ -105,7 +105,7 @@ export class Workspace extends StateObservable {
             this._zoomDebouncer = setTimeout(() => this.setZooming(false), 200);
 
             this._zoomFactor += e.deltaY * -0.001;
-            this._zoomFactor = Math.max(0.3, Math.min(3, this._zoomFactor));
+            this._zoomFactor = Math.max(0.3, Math.min(8, this._zoomFactor));
 
             this.setZooming(true, e.deltaY);
             this.notify('zoom', this._zoomFactor);
@@ -115,7 +115,7 @@ export class Workspace extends StateObservable {
     private handlePanningTrigger(e: KeyboardEvent) {
         if (e.code === 'Space' && !this._panning) {
             this.setPanning(true);
-
+            
             const handlePanning = this.handlePanning.bind(this);
 
             const cleanup = e => {

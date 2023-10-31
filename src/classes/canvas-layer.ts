@@ -6,16 +6,13 @@ import {
 } from '@/classes';
 import { DrawingData, DrawingDataPoint } from '@/classes/drawing-data';
 import { StateObserver } from '@/classes/state-observer';
-import { DefaultBrush } from './brushes';
 
 export class CanvasLayer {
     private readonly _canvas: HTMLCanvasElement;
-    private readonly _bufferCanvas: HTMLCanvasElement;
     
     private _workspace: Workspace;
     private _project: Project;
     private _context: CanvasRenderingContext2D;
-    private _bufferContext: CanvasRenderingContext2D;
     
     private _workspaceObserver: StateObserver;
     private _background: HSL;
@@ -29,7 +26,6 @@ export class CanvasLayer {
         this._background = HSL.fromHex('#ffffff');
 
         this._canvas = document.createElement('canvas');
-        this._bufferCanvas = document.createElement('canvas');
         
         this.initCanvas();
         this.addEventListeners();
@@ -45,14 +41,10 @@ export class CanvasLayer {
     }
 
     private initCanvas() {
-        this._canvas.classList.add('drawingCanvas');
-
+        this._canvas.classList.add('layerCanvas');
         this._context = this._canvas.getContext('2d');
-        this._bufferContext = this._bufferCanvas.getContext('2d');
         
         this.scaleCanvas(this._context, 1);
-        this.scaleCanvas(this._bufferContext, 1);
-
         this.drawBackground();
     }
 
@@ -61,78 +53,37 @@ export class CanvasLayer {
         this._canvas.addEventListener('mousedown', this.handleDrawingTrigger.bind(this));
     }
 
-    private scaleCanvas(context: CanvasRenderingContext2D, zoomFactor: number) {
-        const { width, height } = this._project.canvasSize;
-        const pixelRatio = window.devicePixelRatio * zoomFactor;
-
-        context.canvas.style.width = (width * zoomFactor) + 'px';
-        context.canvas.style.height = (height * zoomFactor) + 'px';
-        context.canvas.width = width * pixelRatio;
-        context.canvas.height = height * pixelRatio;
-
-        context.scale(pixelRatio, pixelRatio);
-    }
-
     private observeWorkspace(property: string, state: any) {
         switch(property) {
-            case 'rotation': this.handleRotation(state); break;
-            case 'zooming': this.handleZooming(state); break;
-            case 'panning': this._canvas.style.pointerEvents = state ? 'none' : 'auto'; break;
-            case 'origin': this.handlePanning(state); break;
-            case 'zoom': this.handleZoom(state); break;
+            case 'origin':
+                this.handlePanning(state);
+                break;
+            case 'rotation':
+            case 'zoom':
+                this.transformCanvas();
+                break;
+            case 'zooming':
+            case 'panning':
+                this._canvas.style.pointerEvents = state ? 'none' : 'auto';
+                break;
         }
-    }
-
-    private handleRotation(angle: number) {
-        this._canvas.style.transform = `rotate(${angle}deg)`;
     }
 
     private handlePanning(origin: Point) {
-        const { canvasSize } = this._project;
-        const { bounds, zoomFactor } = this._workspace;
+        const { bounds } = this._workspace;
         const { x, y } = origin.toScreen(bounds);
-        const { style } = this._canvas;
+        const { canvasSize } = this._project;
 
-        const top = y - (canvasSize.height * zoomFactor) / 2;
-        const left = x - (canvasSize.width * zoomFactor) / 2;
+        const top = y - (canvasSize.height) / 2;
+        const left = x - (canvasSize.width) / 2;
         
-        style.top = top + 'px'; 
-        style.left = left + 'px'; 
+        this._canvas.style.top = top + 'px';
+        this._canvas.style.left = left + 'px';
     }
 
-    private handleZooming(state: boolean) {
-        this._canvas.style.pointerEvents = state ? 'none' : 'auto';
-
-        if (state) {
-            const { width: sWidth, height: sHeight } = this._canvas;
-            const { width: dWidth, height: dHeight } = this._bufferCanvas;
-
-            this._bufferContext.drawImage(this._canvas, 0, 0, sWidth, sHeight, 0, 0, dWidth, dHeight);
-        } else {
-            this.drawBackground();
-
-            this._data.forEach(data => {
-                const brush = new DefaultBrush(1, HSL.fromHex(data.color));
-
-                data.points.slice(1).forEach((point, index) => {
-                    const lastPoint = data.points[index].point;
-                    const points = this.interpolatePoints(lastPoint, point.point, point.size / 5);
-
-                    points.forEach(point => brush.mark(this._context, point));
-                });
-            })
-        }
-    }
-
-    private handleZoom(zoom: number) {
-        const { origin } = this._workspace;
-        const { width, height } = this._project.canvasSize;
-
-        this.scaleCanvas(this._context, zoom);
-        this.handlePanning(origin);
-        
-        this._context.clearRect(0, 0, width, height);
-        this._context.drawImage(this._bufferCanvas, 0, 0);
+    private transformCanvas() {
+        const { rotation, zoomFactor } = this._workspace;
+        this._canvas.style.transform = `scale(${zoomFactor}) rotate(${rotation}deg)`;
     }
 
     private handleDrawingTrigger(e: MouseEvent) {
@@ -166,13 +117,6 @@ export class CanvasLayer {
         this._canvas.addEventListener('mouseleave', toggleDrawing);
         document.addEventListener('mouseup', cleanup);
     }
-
-    private drawBackground() {
-        const { width, height } = this._project.canvasSize;
-        
-        this._context.fillStyle = this._background.toString();
-        this._context.fillRect(0, 0, width, height);
-    }
     
     private handleDrawing({ clientX, clientY }: MouseEvent) {
         const { canvasSize, brush } = this._project;
@@ -201,7 +145,7 @@ export class CanvasLayer {
         const x = rotatedX + canvasSize.width / 2;
         const y = rotatedY + canvasSize.height / 2;
 
-        const size = brush.size * zoomFactor;
+        const size = brush.size;
         const point = new Point(x, y);
         const points = this.interpolatePoints(this._lastPoint ?? point, point, size / 5);
 
@@ -210,6 +154,29 @@ export class CanvasLayer {
         const dataPoint = new DrawingDataPoint(brush.size, point);
         this._currentData.points.push(dataPoint);
         this._lastPoint = point;
+    }
+
+    private scaleCanvas(context: CanvasRenderingContext2D, zoomFactor: number) {
+        const { width, height } = this._project.canvasSize;
+        const scaleFactor = ((96 / 96) + window.devicePixelRatio) * zoomFactor;
+
+        context.canvas.style.width = (width * zoomFactor) + 'px';
+        context.canvas.style.height = (height * zoomFactor) + 'px';
+        context.canvas.width = width * scaleFactor;
+        context.canvas.height = height * scaleFactor;
+
+        context.scale(scaleFactor, scaleFactor);
+    }
+
+    private drawBackground() {
+        const { width, height } = this._project.canvasSize;
+        
+        // Clear
+        this._context.clearRect(0, 0, width, height);
+        
+        // Background
+        this._context.fillStyle = this._background.toString();
+        this._context.fillRect(0, 0, width, height);
     }
 
     private interpolatePoints(start: Point, end: Point, spacing: number) {

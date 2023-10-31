@@ -17,10 +17,11 @@ main {
         inset: 0;
         position: fixed;
 
-        .drawingCanvas {
+        .layerCanvas {
             border-radius: 8px;
             box-shadow: 0px 8px 16px rgb(0 0 0 / 26%);
             cursor: url(../assets/cursors/dot.cur), auto;
+            image-rendering: pixelated;
             overflow: hidden;
             position: absolute;
         }

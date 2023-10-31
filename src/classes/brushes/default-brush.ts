@@ -19,9 +19,7 @@ export class DefaultBrush extends BaseBrush {
     }
 
     public override mark(context: CanvasRenderingContext2D, position: Point): void {
-        const scale = context.getTransform().a;
-        const size = this.size * scale;
-        
+        const size = this.size;
         const dab = this.createDab(position, size);
 
         context.fillStyle = this.color.toString();
