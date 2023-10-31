@@ -62,14 +62,13 @@ export class CanvasLayer {
     }
 
     private scaleCanvas(context: CanvasRenderingContext2D, zoomFactor: number) {
-        const canvas = context.canvas;
         const { width, height } = this._project.canvasSize;
         const pixelRatio = window.devicePixelRatio * zoomFactor;
 
-        canvas.style.width = (width * zoomFactor) + 'px';
-        canvas.style.height = (height * zoomFactor) + 'px';
-        canvas.width = width * pixelRatio;
-        canvas.height = height * pixelRatio;
+        context.canvas.style.width = (width * zoomFactor) + 'px';
+        context.canvas.style.height = (height * zoomFactor) + 'px';
+        context.canvas.width = width * pixelRatio;
+        context.canvas.height = height * pixelRatio;
 
         context.scale(pixelRatio, pixelRatio);
     }
@@ -169,8 +168,7 @@ export class CanvasLayer {
     }
 
     private drawBackground() {
-        const { canvasSize } = this._project;
-        const { width, height } = canvasSize;
+        const { width, height } = this._project.canvasSize;
         
         this._context.fillStyle = this._background.toString();
         this._context.fillRect(0, 0, width, height);

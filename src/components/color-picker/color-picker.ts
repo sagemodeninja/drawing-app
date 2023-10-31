@@ -1,10 +1,9 @@
 import '@/components';
-import styles from '@/styles/components.module.scss';
+import styles from '@/styles/color-picker.module.scss';
 
 import { HSL } from '@/classes';
-import { ColorPalette, ColorSlider } from '@/components';
+import { ColorPalette, ColorSlider, ToolPopup } from '@/components';
 import { CustomComponent, customComponent } from '@sagemodeninja/custom-component';
-import { autoUpdate, computePosition, offset, flip, shift } from '@floating-ui/dom';
 import { RGB } from '@/classes/colors';
 
 const classNames: Record<string, string> = styles.locals;
@@ -16,15 +15,13 @@ export class ColorPicker extends CustomComponent {
     private _color: HSL = new HSL(0, 0, 0);
 
     private _control: HTMLDivElement;
-    private _picker: HTMLDivElement;
+    private _picker: ToolPopup;
     private _palette: ColorPalette;
     private _slider: ColorSlider;
     private _hexInput: HTMLInputElement;
     private _redChannelInput: HTMLInputElement;
     private _greenChannelInput: HTMLInputElement;
     private _blueChannelInput: HTMLInputElement;
-
-    private _pickerCleanup: any;
 
     // States
     public get color() {
@@ -79,7 +76,7 @@ export class ColorPicker extends CustomComponent {
     public render() {
         return `
             <div class="control ${classNames.control}" part="control"></div>
-            <div class="picker ${classNames.picker}" part="picker">
+            <tool-popup class="picker ${classNames.picker}" part="picker">
                 <div class="pointer ${classNames.pointer}" part="pointer"></div>
                 <color-palette class="palette" part="palette"></color-palette>
                 <color-slider class="colorSlider" part="colorSlider"></color-slider>
@@ -101,11 +98,12 @@ export class ColorPicker extends CustomComponent {
                         <input type="number" class="blueChannelInput" />
                     </div>
                 </div>
-            </div>
+            </tool-popup>
         `
     }
 
     public connectedCallback() {
+        this.picker.attach(this.control, 'top');
         this.addEventListeners();
     }
 
@@ -157,32 +155,14 @@ export class ColorPicker extends CustomComponent {
     }
 
     private setPickerShown(shown: boolean) {
-        this.picker.classList.toggle(classNames.active, shown);
-        
         if (shown) {
             this.palette.color = this._color;
             this.slider.color = this._color;
-
-            this._pickerCleanup = autoUpdate(
-                this.control,
-                this.picker,
-                this.updateMenuPosition.bind(this)
-            );
-        } else if (this._pickerCleanup) {
-            this._pickerCleanup();
+    
+            this.picker.show();
+        } else {
+            this.picker.hide();
         }
-    }
-
-    private updateMenuPosition() {
-        computePosition(this.control, this.picker, {
-            placement: 'top',
-            middleware: [offset(16), flip(), shift()],
-        }).then(({ x, y }) => {
-            Object.assign(this.picker.style, {
-                left: x + 'px',
-                top: y + 'px',
-            });
-        });
     }
 
     private updateColor(color: HSL) {

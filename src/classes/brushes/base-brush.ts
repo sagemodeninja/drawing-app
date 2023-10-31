@@ -3,7 +3,7 @@ import { Point } from '../point';
 import { HSL } from '../colors';
 
 export abstract class BaseBrush implements IBrush {
-    abstract id: string;
+    public abstract id: string;
     
     constructor(public size: number, public color: HSL) {}
 
