@@ -89,7 +89,7 @@ export class Workspace extends StateObservable {
     private handleRotation(e: KeyboardEvent) {
         if (e.code.includes('Bracket')) {
             const key = e.key.charCodeAt(0);
-            const delta = (key - 92) * 10;
+            const delta = (key - 92) * 15;
 
             this._rotation += delta;
             this._rotation = (this._rotation % 360 + 360) % 360;

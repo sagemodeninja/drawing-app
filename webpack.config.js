@@ -27,18 +27,15 @@ module.exports = () => {
                     exclude: /node_modules/,
                 },
                 {
-                    test: /\.module\.s[ac]ss$/,
+                    test: /\.component\.s[ac]ss$/,
                     use: [
-                        {
-                            loader: 'css-loader',
-                            options: {  modules: true }
-                        },
+                        'css-loader',
                         'sass-loader',
                     ],
                 },
                 {
                     test: /\.s[ac]ss$/,
-                    exclude: /\.module\.s[ac]ss$/,
+                    exclude: /\.component\.s[ac]ss$/,
                     use: [
                         MiniCssExtractPlugin.loader,
                         'css-loader',

@@ -83,7 +83,9 @@ export class CanvasLayer {
 
     private transformCanvas() {
         const { rotation, zoomFactor } = this._workspace;
+
         this._canvas.style.transform = `scale(${zoomFactor}) rotate(${rotation}deg)`;
+        this._canvas.style.imageRendering = zoomFactor < 3 ? 'auto' : 'pixelated';
     }
 
     private handleDrawingTrigger(e: MouseEvent) {

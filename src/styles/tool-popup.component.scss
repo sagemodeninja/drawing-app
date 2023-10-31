@@ -11,7 +11,7 @@
     z-index: 9999;
 
     &::before { 
-        background: linear-gradient(to bottom, #1E1E1EE6, #202020);
+        background: linear-gradient(to left, #1E1E1EE6, #202020);
         -webkit-backdrop-filter: saturate(180%) blur(20px);
         backdrop-filter: saturate(180%) blur(20px);
         border-radius: 8px;
@@ -26,11 +26,11 @@
         background-color: #202020;
         border: solid 1px rgb(255 255 255 / 8.37%);
         border-radius: 5px;
-        bottom: calc(($size / 2) * -1);
         content: '';
         height: $size;
-        left: calc(50% - ($size / 2));
+        left: calc(($size / 2) * -1);
         position: absolute;
+        top: calc(50% - ($size / 2));
         transform: rotate(-45deg);
         width: $size;
         z-index: -2;

@@ -3,17 +3,19 @@ import '@/components';
 
 import { HSL, Project, Size, Workspace } from '@/classes';
 import { CanvasLayer } from '@/classes/canvas-layer';
-import { ColorPicker } from '@/components';
+import { ColorPicker, StatusBar } from '@/components';
 import { DefaultBrush } from '../brushes';
 
 export class App {
     private readonly _workspace: Workspace;
+    private readonly _statusBar: StatusBar;
     private readonly _colorPicker: ColorPicker;
 
     private _project: Project;
 
     constructor() {
         this._workspace = new Workspace('workspace');
+        this._statusBar = document.getElementById('statusBar') as StatusBar;
         this._colorPicker = document.getElementById('colorPicker') as ColorPicker;
         
         this.addEventListeners();
@@ -27,8 +29,10 @@ export class App {
         project.brush = new DefaultBrush(1, defaultColor);
         
         this._project = project;
+        
         this._workspace.attachProject(this._project);
-
+        this._statusBar.connect(this._workspace);
+        
         project.addLayer(new CanvasLayer(project));
     }
     

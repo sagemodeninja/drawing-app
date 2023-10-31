@@ -1,12 +1,9 @@
 import '@/components';
-import styles from '@/styles/color-picker.module.scss';
-
 import { HSL } from '@/classes';
 import { ColorPalette, ColorSlider, ToolPopup } from '@/components';
 import { CustomComponent, customComponent } from '@sagemodeninja/custom-component';
 import { RGB } from '@/classes/colors';
-
-const classNames: Record<string, string> = styles.locals;
+import styles from '@/styles/color-picker.component.scss';
 
 @customComponent('color-picker')
 export class ColorPicker extends CustomComponent {
@@ -75,25 +72,25 @@ export class ColorPicker extends CustomComponent {
 
     public render() {
         return `
-            <div class="control ${classNames.control}" part="control"></div>
-            <tool-popup class="picker ${classNames.picker}" part="picker">
-                <div class="pointer ${classNames.pointer}" part="pointer"></div>
+            <div class="control" part="control"></div>
+            <tool-popup class="picker" part="picker">
+                <div class="pointer" part="pointer"></div>
                 <color-palette class="palette" part="palette"></color-palette>
                 <color-slider class="colorSlider" part="colorSlider"></color-slider>
-                <div class="inputs ${classNames.inputs}" part="inputs">
-                    <div class="inputGroup ${classNames.inputGroup}">
+                <div class="inputs" part="inputs">
+                    <div class="inputGroup">
                         <label>Hex</label>
-                        <input class="hexInput ${classNames.hexInput}" />
+                        <input class="hexInput" />
                     </div>
-                    <div class="inputGroup ${classNames.inputGroup}">
+                    <div class="inputGroup">
                         <label>R</label>
                         <input type="number" class="redChannelInput" />
                     </div>
-                    <div class="inputGroup ${classNames.inputGroup}">
+                    <div class="inputGroup">
                         <label>G</label>
                         <input type="number" class="greenChannelInput" />
                     </div>
-                    <div class="inputGroup ${classNames.inputGroup}">
+                    <div class="inputGroup">
                         <label>B</label>
                         <input type="number" class="blueChannelInput" />
                     </div>
@@ -103,7 +100,7 @@ export class ColorPicker extends CustomComponent {
     }
 
     public connectedCallback() {
-        this.picker.attach(this.control, 'top');
+        this.picker.attach(this.control, 'right');
         this.addEventListeners();
     }
 

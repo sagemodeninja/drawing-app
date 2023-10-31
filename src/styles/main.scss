@@ -1,3 +1,21 @@
+@mixin floatingBar {
+    border-radius: 16px;
+    display: flex;
+    overflow: hidden;
+    position: absolute;
+    z-index: 99;
+
+    &::before {
+        background-color: #1E1E1EE6;
+        -webkit-backdrop-filter: saturate(180%) blur(20px);
+        backdrop-filter: saturate(180%) blur(20px);
+        content: '';
+        inset: 0;
+        position: absolute;
+        z-index: -1;
+    }
+}
+
 body {
     font-family: 'Manrope', sans-serif;
     height: 100vh;
@@ -21,52 +39,20 @@ main {
             border-radius: 8px;
             box-shadow: 0px 8px 16px rgb(0 0 0 / 26%);
             cursor: url(../assets/cursors/dot.cur), auto;
-            image-rendering: pixelated;
             overflow: hidden;
             position: absolute;
         }
     }
 }
 
-.toolbarContainer {
-    display: flex;
-    justify-content: center;
-    width: 100%;
+.toolbar {
+    @include floatingBar();
 
-    & .toolbar {
-        bottom: 16px;
-        border-radius: 16px;
-        box-shadow: 0px 2px 4px 0px rgb(0 0 0 / 13%);
-        display: flex;
-        gap: 8px;
-        justify-content: center;
-        overflow: hidden;
-        padding: 16px;
-        position: absolute;
-        z-index: 99;
-
-        &::before {
-            background-color: #1E1E1EE6;
-            -webkit-backdrop-filter: saturate(180%) blur(20px);
-            backdrop-filter: saturate(180%) blur(20px);
-            content: '';
-            inset: 0;
-            position: absolute;
-            z-index: -1;
-        }
-    }
-
-    & #loader {
-        border-radius: 50%;
-        box-sizing: border-box;
-        height: 50px;
-        width: 50px;
-
-        border: solid 11px #E8D59E;
-        border-top: solid 11px #D0AA3D;
-    }
-}
-
-svg #solidBg {
-    stroke: #D0AA3D;
+    align-items: center;
+    flex-direction: column;
+    gap: 16px;
+    height: max-content;
+    inset: 0 auto;
+    margin: auto 16px;
+    padding: 16px;
 }

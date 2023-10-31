@@ -7,9 +7,7 @@ import {
     shift,
     Placement
 } from '@floating-ui/dom';
-import styles from '@/styles/tool-popup.module.scss';
-
-const classNames: Record<string, string> = styles.locals;
+import styles from '@/styles/tool-popup.component.scss';
 
 @customComponent('tool-popup')
 export class ToolPopup extends CustomComponent {
@@ -23,13 +21,13 @@ export class ToolPopup extends CustomComponent {
         return `<slot></slot>`;
     }
 
-    public attach(anchor: any, placement: Placement) {
+    public attach(anchor: any, placement: Placement) { 
         this._anchor = anchor;
         this._placement = placement;
     }
 
     public show() {
-        this.classList.toggle(classNames.active, true);
+        this.classList.toggle('active', true);
 
         this._cleanup = autoUpdate(
             this._anchor,
@@ -40,7 +38,7 @@ export class ToolPopup extends CustomComponent {
 
     public hide() {
         this._cleanup();
-        this.classList.toggle(classNames.active, false);
+        this.classList.toggle('active', false);
     }
 
     private updatePosition() {
