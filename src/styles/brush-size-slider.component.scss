@@ -1,0 +1,14 @@
+:host {
+    display: block;
+    height: 40px;
+    width: 180px;
+}
+
+.control {
+    height: 100%;
+
+    .canvas {
+        height: 100%;
+        width: 100%;
+    }
+}

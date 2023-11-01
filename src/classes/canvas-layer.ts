@@ -44,7 +44,7 @@ export class CanvasLayer {
         this._canvas.classList.add('layerCanvas');
         this._context = this._canvas.getContext('2d');
         
-        this.scaleCanvas(this._context, 1);
+        this.scaleCanvas(this._context);
         this.drawBackground();
     }
 
@@ -158,12 +158,12 @@ export class CanvasLayer {
         this._lastPoint = point;
     }
 
-    private scaleCanvas(context: CanvasRenderingContext2D, zoomFactor: number) {
+    private scaleCanvas(context: CanvasRenderingContext2D) {
         const { width, height } = this._project.canvasSize;
-        const scaleFactor = ((96 / 96) + window.devicePixelRatio) * zoomFactor;
+        const scaleFactor = (96 / 96) + window.devicePixelRatio;
 
-        context.canvas.style.width = (width * zoomFactor) + 'px';
-        context.canvas.style.height = (height * zoomFactor) + 'px';
+        context.canvas.style.width = width + 'px';
+        context.canvas.style.height = height + 'px';
         context.canvas.width = width * scaleFactor;
         context.canvas.height = height * scaleFactor;
 

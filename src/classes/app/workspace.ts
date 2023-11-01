@@ -105,7 +105,7 @@ export class Workspace extends StateObservable {
             this._zoomDebouncer = setTimeout(() => this.setZooming(false), 200);
 
             this._zoomFactor += e.deltaY * -0.001;
-            this._zoomFactor = Math.max(0.3, Math.min(8, this._zoomFactor));
+            this._zoomFactor = Math.max(0.5, Math.min(8, this._zoomFactor));
 
             this.setZooming(true, e.deltaY);
             this.notify('zoom', this._zoomFactor);

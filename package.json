@@ -21,6 +21,7 @@
   },
   "devDependencies": {
     "postcss": "^8.4.31",
+    "reflect-metadata": "^0.1.13",
     "sass": "^1.69.5",
     "sass-loader": "^13.3.2",
     "ts-loader": "^9.5.0"

@@ -92,7 +92,7 @@ export class StatusBar extends CustomComponent {
         this.rotationLine.setAttribute('y2', rotationY);
 
         this.zoomFactorSpan.innerText = `${zoomLevel}%`;
-        this.originSpan.innerText = `${screen.x}px, ${screen.y}px`;
+        this.originSpan.innerText = `${origin.x}px, ${origin .y}px`;
         this.rotationSpan.innerText = `${rotation}°`;
     }
 
