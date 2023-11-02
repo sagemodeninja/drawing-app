@@ -1,4 +1,4 @@
-import { CustomComponent, customComponent } from '@sagemodeninja/custom-component';
+import { customComponent, query, CustomComponent } from '@sagemodeninja/custom-component';
 import styles from '@/styles/status-bar.component.scss';
 import { Workspace } from '@/classes';
 import { StateObserver } from '@/classes/state-observer';
@@ -10,36 +10,17 @@ export class StatusBar extends CustomComponent {
     private _workspace: Workspace;
     private _workspaceObserver: StateObserver;
 
+    @query('.zoomFactor')
     private _zoomFactorSpan: HTMLSpanElement;
+    
+    @query('.origin')
     private _originSpan: HTMLSpanElement;
-    private _rotationIconSVG: SVGElement;
+    
+    @query('.rotationLine')
     private _rotationLine: SVGLineElement;
+
+    @query('.rotation')
     private _rotationSpan: HTMLSpanElement;
-
-    public get zoomFactorSpan() {
-        this._zoomFactorSpan ??= this.shadowRoot.querySelector('.zoomFactor');
-        return this._zoomFactorSpan;
-    }
-
-    public get originSpan() {
-        this._originSpan ??= this.shadowRoot.querySelector('.origin');
-        return this._originSpan;
-    }
-
-    public get rotationIconSVG() {
-        this._rotationIconSVG ??= this.shadowRoot.querySelector('.rotationIcon');
-        return this._rotationIconSVG;
-    }
-
-    public get rotationLine() {
-        this._rotationLine ??= this.shadowRoot.querySelector('.rotationLine');
-        return this._rotationLine;
-    }
-
-    public get rotationSpan() {
-        this._rotationSpan ??= this.shadowRoot.querySelector('.rotation');
-        return this._rotationSpan;
-    }
 
     public render() {
         return `
@@ -73,7 +54,7 @@ export class StatusBar extends CustomComponent {
     public connect(workspace: Workspace) {
         this._workspace = workspace;
         this._workspaceObserver.observe(workspace);
-        this.setStatus()
+        this.setStatus();
     }
 
     private observeWorkspace(property: string) {
@@ -83,17 +64,16 @@ export class StatusBar extends CustomComponent {
     }
 
     private setStatus() {
-        const { bounds, rotation, zoomFactor, origin } = this._workspace;
+        const { rotation, zoomFactor, origin } = this._workspace;
         const { x: rotationX, y: rotationY } = this.getPointAtRotation(9, 9, 5, rotation);
         const zoomLevel = Math.round(zoomFactor * 100);
-        const screen = origin.toScreen(bounds);
 
-        this.rotationLine.setAttribute('x2', rotationX);
-        this.rotationLine.setAttribute('y2', rotationY);
+        this._rotationLine.setAttribute('x2', rotationX);
+        this._rotationLine.setAttribute('y2', rotationY);
 
-        this.zoomFactorSpan.innerText = `${zoomLevel}%`;
-        this.originSpan.innerText = `${origin.x}px, ${origin .y}px`;
-        this.rotationSpan.innerText = `${rotation}°`;
+        this._zoomFactorSpan.innerText = `${zoomLevel}%`;
+        this._originSpan.innerText = `${origin.x}px, ${origin .y}px`;
+        this._rotationSpan.innerText = `${rotation}°`;
     }
 
     private getPointAtRotation(cx, cy, radius, degrees) {

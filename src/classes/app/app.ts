@@ -3,13 +3,14 @@ import '@/components';
 
 import { HSL, Project, Size, Workspace } from '@/classes';
 import { CanvasLayer } from '@/classes/canvas-layer';
-import { ColorPicker, StatusBar } from '@/components';
+import { BrushTool, ColorPicker, StatusBar } from '@/components';
 import { DefaultBrush } from '../brushes';
 
 export class App {
     private readonly _workspace: Workspace;
     private readonly _statusBar: StatusBar;
     private readonly _colorPicker: ColorPicker;
+    private readonly _brushTool: BrushTool;
 
     private _project: Project;
 
@@ -17,6 +18,7 @@ export class App {
         this._workspace = new Workspace('workspace');
         this._statusBar = document.getElementById('statusBar') as StatusBar;
         this._colorPicker = document.getElementById('colorPicker') as ColorPicker;
+        this._brushTool = document.getElementById('brushTool') as BrushTool;
         
         this.addEventListeners();
     }
@@ -26,7 +28,7 @@ export class App {
         const defaultColor = new HSL(0, 0, 0);
 
         project.canvasSize = new Size(800, 500);
-        project.brush = new DefaultBrush(1, defaultColor);
+        project.brush = this._brushTool.brush;
         
         this._project = project;
         

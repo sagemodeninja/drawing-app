@@ -1,24 +1,33 @@
-import { CustomComponent, customComponent } from '@sagemodeninja/custom-component';
+import { IBrush } from '@/interfaces';
+import { CustomComponent, customComponent, query, state } from '@sagemodeninja/custom-component';
 import { ToolPopup } from '@/components';
+import { BrushSizeSlider } from '@/components/brush-tool';
+import { DefaultBrush } from '@/classes/brushes';
+import { HSL } from '@/classes/colors';
 import styles from '@/styles/brush-tool.component.scss';
 
 @customComponent('brush-tool')
 export class BrushTool extends CustomComponent {
     static styles = styles.toString();
 
-    private _control: HTMLButtonElement;
-    private _popup: ToolPopup;
+    constructor() {
+        super();
+        this.brush = new DefaultBrush(1, HSL.fromHex('#000'));
+    }
 
-    // DOM
-    private get control() {
-        this._control ??= this.shadowRoot.querySelector('.control');
-        return this._control;
-    }
+    public brush: IBrush;
+
+    @query('.control')
+    private _control: HTMLButtonElement;
     
-    private get popup() {
-        this._popup ??= this.shadowRoot.querySelector('.popup');
-        return this._popup;
-    }
+    @query('.popup')
+    private _popup: ToolPopup;
+    
+    @query('.sizeInput')
+    private _sizeInput: HTMLSpanElement;
+
+    @query('.sizeSlider')
+    private _slider: BrushSizeSlider;
 
     public render() {
         return `
@@ -28,18 +37,27 @@ export class BrushTool extends CustomComponent {
                 </svg>
             </button>
             <tool-popup class="popup" part="popup">
-                <brush-size-slider></brush-size-slider>
+                <div class="brush-size">
+                    <p class="title">Brush Size</p>
+                    <div class="control">
+                        <span class="input" style="width: 68px;">
+                            <span class="sizeInput">1.0</span>
+                            <span class="unit"> px</span>
+                        </span>
+                        <brush-size-slider class="sizeSlider" width="150" knob-size="20" start-size="1" end-size="10"></brush-size-slider>
+                    </div>
+                </div>
             </tool-popup>
         `;
     }
 
     public connectedCallback() {
-        this.popup.attach(this.control, 'right');
+        this._popup.attach(this._control, 'right');
         this.addEventListeners();
     }
 
     private addEventListeners() {
-        this.control.addEventListener('click', e => {
+        this._control.addEventListener('click', e => {
             e.stopPropagation();
             this.setActive(true);
 
@@ -52,13 +70,18 @@ export class BrushTool extends CustomComponent {
 
             document.addEventListener('mousedown', dismiss)
         })
+
+        this._slider.addEventListener('change', () => {
+            this.brush.size = this._slider.value;
+            this._sizeInput.innerText = this._slider.value.toFixed(1);
+        })
     }
 
     private setActive(active: boolean) {
         if (active) {
-            this.popup.show();
+            this._popup.show();
         } else {
-            this.popup.hide();
+            this._popup.hide();
         }
     }
 }

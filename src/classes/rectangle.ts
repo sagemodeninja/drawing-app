@@ -1,8 +1,10 @@
 export class Rectangle {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
+    constructor(
+        public x: number,
+        public y: number,
+        public width: number,
+        public height: number
+    ) {}
 
     get top() {
         return this.y;
@@ -21,6 +23,6 @@ export class Rectangle {
     }
 
     static fromDOMRect({ x, y, width, height }: DOMRect) {
-        return { x, y, width, height } as Rectangle;
+        return  new Rectangle(x, y, width, height);
     }
 }

@@ -1,75 +1,127 @@
-import { CustomComponent, customComponent } from '@sagemodeninja/custom-component';
-import { state, STATE_PROPERTIES_KEY } from '@/classes/decorators';
+import { CustomComponent, customComponent, property, query } from '@sagemodeninja/custom-component';
+import { Rectangle } from '@/classes';
 import styles from '@/styles/brush-size-slider.component.scss';
 
 @customComponent('brush-size-slider')
 export class BrushSizeSlider extends CustomComponent {
     static styles = styles.toString();
+    
+    @property()
+    public value: number;
+    
+    @property()
+    public width: number;
 
-    static get observedAttributes() {
-        return Reflect.getMetadata(STATE_PROPERTIES_KEY, BrushSizeSlider.prototype);
-    }
- 
-    private _canvas: HTMLCanvasElement;
-    private _context: CanvasRenderingContext2D;
+    @property({ attribute: 'knob-size' })
+    public knobSize: number;
 
-    constructor() {
-        super(); 
+    @property({ attribute: 'start-size' })
+    public startSize: number;
+    
+    @property({ attribute: 'end-size' })
+    public endSize: number;
+    
+    @query('.track')
+    private _track: SVGElement;
+
+    @query('.knob')
+    private _knob: HTMLDivElement;
+
+    @query('.trackPath')
+    private _trackPath: SVGPathElement;
+
+    private get trackBounds() {
+        const startRadius = Math.round(this.startSize / 2);
+        const endRadius = Math.round(this.endSize / 2);
+        const width = this.width - this.knobSize - startRadius - endRadius;
+
+        return new Rectangle(startRadius, 0, width, this.knobSize);
     }
 
     public render() {
         return `
-            <div class="control">
-                <canvas class="canvas"></canvas>
-            </div>
+            <div class="knob"></div>
+            <svg class="track">
+                <path class="trackPath" />
+            </svg>
         `
     }
-  
-    // State
-    @state()
-    public width: number;
-    
-    @state()
-    public height: number;
 
     public connectedCallback() {
-        this.initCanvas();
-        this.renderSlider();
-
-        console.dir(this);
-        this.width = 1000;
+        this.addEventListeners();
     }
 
-    public attributeChangedCallback(prop: string, _, value: any) { 
-        this[prop] = value;
+    protected override stateHasChanged() {
+        this.scale();
     }
 
-    private onStateChanged(property: string, oldValue: any, newValue: any) {
+    private addEventListeners() {
+        this._track.addEventListener('mousedown', e => {
+            const { left: trackLeft } = this._track.getBoundingClientRect();
+            const { left, right } = this.trackBounds;
+
+            const handleSlide = (e: MouseEvent) => {
+                e.preventDefault();
+
+                const x = Math.max(left, Math.min(right, e.clientX - trackLeft));
+                
+                this.setValue(x);
+                this.updateKnob(x);
+                this.dispatchEvent(new Event('change'));
+            }
+
+            const cleanup = () => {
+                document.removeEventListener('mousemove', handleSlide);
+                document.removeEventListener('mouseup', cleanup);
+            }
+
+            handleSlide(e);
+
+            document.addEventListener('mousemove', handleSlide);
+            document.addEventListener('mouseup', cleanup);
+        });
+    }
+
+    private scale() {
+        this.style.width = this.width + 'px';
+        this.style.setProperty('--size', this.knobSize + 'px');
+        this.style.setProperty('--start-size', this.startSize + 'px');
         
+        this._track.setAttribute('viewport', `0 0 ${this.width - 20} 20`);
+        this.drawTrack();
     }
 
-    private initCanvas() {
-        this._canvas = this.shadowRoot.querySelector('.canvas');
-        this._context = this._canvas.getContext('2d');
+    private setValue(x: number) {
+        const { left, width } = this.trackBounds;
+        const range = this.endSize - this.startSize;
+        const value = this.startSize + ((x - left) / width * range);
 
-        this.scaleCanvas();
+        this.value = Math.round(value * 10) / 10;
     }
 
-    private scaleCanvas() {
-        const { width, height } = this._canvas.getBoundingClientRect();
+    private updateKnob(left: number) {
+        const knobBorder = (this.knobSize - this.value) / 2;
 
-        // const { width, height } = this._project.canvasSize;
-        // const scaleFactor = (96 / 96) + window.devicePixelRatio;
-
-        // context.canvas.style.width = width + 'px';
-        // context.canvas.style.height = height + 'px';
-        // context.canvas.width = width * scaleFactor;
-        // context.canvas.height = height * scaleFactor;
-
-        // context.scale(scaleFactor, scaleFactor);
+        this._knob.style.left = left + 'px';
+        this._knob.style.borderWidth = knobBorder + 'px';
     }
 
-    private renderSlider() {
+    private drawTrack() {
+        const width = this.width - this.knobSize;
+        const { startSize, endSize } = this;
 
+        const centerY = this.knobSize / 2;
+        const startRadius = Math.round(startSize / 2);
+        const endRadius = Math.round(endSize / 2);
+
+        const commands = [
+            `M${startRadius},${centerY + startRadius}`,
+            `A${startRadius},${startRadius} 0,0,1 ${startRadius},${centerY - startRadius}`,
+            `L${width - endRadius},${centerY - endRadius}`,
+            `A${endRadius},${endRadius} 0,0,1 ${width - endRadius},${centerY + endRadius}`,
+            `Z`
+        ]
+
+        this._trackPath.setAttribute('d', commands.join(' '));
     }
 }
