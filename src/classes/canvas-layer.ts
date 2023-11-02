@@ -2,6 +2,7 @@ import {
     HSL,
     Point,
     Project,
+    Size,
     Workspace
 } from '@/classes';
 import { DrawingData, DrawingDataPoint } from '@/classes/drawing-data';
@@ -20,6 +21,9 @@ export class CanvasLayer {
 
     private _data: DrawingData[] = [];
     private _currentData: DrawingData;
+
+    private _cellSize: Size;
+    private _debugPoint: Point;
 
     constructor(project: Project) {
         this._project = project;
@@ -43,14 +47,35 @@ export class CanvasLayer {
     private initCanvas() {
         this._canvas.classList.add('layerCanvas');
         this._context = this._canvas.getContext('2d');
+
+        const min = 150;
+        const { width, height } = this._project.canvasSize;
+        const cellWidth = this.calculateCellLength(width, min);
+        const cellHeight = this.calculateCellLength(height, min);
+
+        this._cellSize = new Size(cellWidth, cellHeight);
+        this._debugPoint = new Point(0, 0);
         
         this.scaleCanvas(this._context);
         this.drawBackground();
+
+        // Initial
+        this.debugGrid();
     }
 
     private addEventListeners() {
         this._workspaceObserver = new StateObserver(this.observeWorkspace.bind(this));
         this._canvas.addEventListener('mousedown', this.handleDrawingTrigger.bind(this));
+
+        this._canvas.addEventListener('mousemove', e => {
+            const { top, left } = this._canvas.getBoundingClientRect();
+            
+            this._debugPoint.x = e.clientX - left;
+            this._debugPoint.y = e.clientY - top;
+
+            this.drawBackground();
+            this.debugGrid();
+        })
     }
 
     private observeWorkspace(property: string, state: any) {
@@ -179,6 +204,66 @@ export class CanvasLayer {
         // Background
         this._context.fillStyle = this._background.toString();
         this._context.fillRect(0, 0, width, height);
+    }
+
+    private debugGrid() {
+        const { width, height } = this._project.canvasSize;
+        const { width: cellWidth, height: cellHeight } = this._cellSize;
+        const { x, y } = this._debugPoint;
+
+        const debugCol = Math.floor(x / cellWidth);
+        const debugRow = Math.floor(y / cellHeight);
+
+        this._context.strokeStyle = 'blue';
+        this._context.beginPath();
+        this._context.arc(x, y, 10, 0, Math.PI * 180)
+        this._context.stroke();
+
+        // Grid
+        const colCount = width / this._cellSize.width;
+        const rowCount = height / this._cellSize.height;
+
+        this._context.strokeStyle = 'red';
+        this._context.beginPath();
+
+        // Legend
+        this._context.font = `15px sans-serif`;
+        this._context.textAlign = 'center';
+        this._context.textBaseline = 'top';
+
+        for (let row = 0; row <= rowCount; row++) {
+            const top = (row + 1) * this._cellSize.height;
+            const textTop = row * this._cellSize.height;
+
+            this._context.moveTo(0, top)
+            this._context.lineTo(width, top);
+            
+            for (let col = 0; col <= colCount; col++) {
+                const left = (col + 1) * this._cellSize.width;
+                const textLeft = col * this._cellSize.width;
+
+                this._context.moveTo(left, 0)
+                this._context.lineTo(left, height);
+
+                const label = (col + 1) + (row * colCount);
+
+                this._context.fillStyle = (col === debugCol && row === debugRow) ? 'blue' : 'red';
+                this._context.fillText(label.toString(), textLeft + 15, textTop + 15);
+            }
+        }
+
+        this._context.stroke();
+    }
+
+    private calculateCellLength(length: number, minimum: number) {
+        const initial = Math.floor(length / minimum);
+
+        const resolveX = (x: number) => {
+            if (x <= 1) return 1;
+            return (length % x) > 0 ? resolveX(x - 1) : x;
+        }
+
+        return length / resolveX(initial);
     }
 
     private interpolatePoints(start: Point, end: Point, spacing: number) {
