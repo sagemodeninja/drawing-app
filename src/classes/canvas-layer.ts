@@ -5,7 +5,7 @@ import {
     Size,
     Workspace
 } from '@/classes';
-import { DrawingData, DrawingDataPoint } from '@/classes/drawing-data';
+import { Stroke } from '@/classes/stroke';
 import { StateObserver } from '@/classes/state-observer';
 
 export class CanvasLayer {
@@ -19,10 +19,11 @@ export class CanvasLayer {
     private _background: HSL;
     private _lastPoint: Point;
 
-    private _data: DrawingData[] = [];
-    private _currentData: DrawingData;
+    private _strokes: Stroke[] = [];
+    private _currentStroke: Stroke;
 
     private _cellSize: Size;
+    private _globalChunk: { [key: number]: number[] };
     private _debugPoint: Point;
 
     constructor(project: Project) {
@@ -30,6 +31,7 @@ export class CanvasLayer {
         this._background = HSL.fromHex('#ffffff');
 
         this._canvas = document.createElement('canvas');
+        this._globalChunk = {};
         
         this.initCanvas();
         this.addEventListeners();
@@ -67,15 +69,15 @@ export class CanvasLayer {
         this._workspaceObserver = new StateObserver(this.observeWorkspace.bind(this));
         this._canvas.addEventListener('mousedown', this.handleDrawingTrigger.bind(this));
 
-        this._canvas.addEventListener('mousemove', e => {
-            const { top, left } = this._canvas.getBoundingClientRect();
+        // this._canvas.addEventListener('mousemove', e => {
+        //     const { top, left } = this._canvas.getBoundingClientRect();
             
-            this._debugPoint.x = e.clientX - left;
-            this._debugPoint.y = e.clientY - top;
+        //     this._debugPoint.x = e.clientX - left;
+        //     this._debugPoint.y = e.clientY - top;
 
-            this.drawBackground();
-            this.debugGrid();
-        })
+        //     this.drawBackground();
+        //     this.debugGrid();
+        // })
     }
 
     private observeWorkspace(property: string, state: any) {
@@ -124,8 +126,9 @@ export class CanvasLayer {
         };
  
         const cleanup = () => {
-            this._data.push(this._currentData);
-            this._currentData = null;
+            this.cacheStroke(this._currentStroke);
+            this._strokes.push(this._currentStroke);
+            this._currentStroke = null;
             this._lastPoint = null;
 
             this._canvas.removeEventListener('mousemove', handleDrawing);
@@ -135,7 +138,7 @@ export class CanvasLayer {
         }
 
         const { brush } = this._project;
-        this._currentData = new DrawingData(brush.id, brush.color.toHex());
+        this._currentStroke = new Stroke(brush.id, brush.color.toHex());
 
         this.handleDrawing(e);
         
@@ -172,14 +175,12 @@ export class CanvasLayer {
         const x = rotatedX + canvasSize.width / 2;
         const y = rotatedY + canvasSize.height / 2;
 
-        const size = brush.size;
         const point = new Point(x, y);
-        const points = this.interpolatePoints(this._lastPoint ?? point, point, size / 5);
+        const points = this.interpolatePoints(this._lastPoint ?? point, point, brush.size / 5);
 
         points.forEach(point => brush.mark(this._context, point));
 
-        const dataPoint = new DrawingDataPoint(brush.size, point);
-        this._currentData.points.push(dataPoint);
+        this._currentStroke.addPoints(brush.size, point);
         this._lastPoint = point;
     }
 
@@ -245,7 +246,7 @@ export class CanvasLayer {
                 this._context.moveTo(left, 0)
                 this._context.lineTo(left, height);
 
-                const label = (col + 1) + (row * colCount);
+                const label = col + (row * colCount);
 
                 this._context.fillStyle = (col === debugCol && row === debugRow) ? 'blue' : 'red';
                 this._context.fillText(label.toString(), textLeft + 15, textTop + 15);
@@ -280,5 +281,41 @@ export class CanvasLayer {
         }
 
         return [...points, end];
+    }
+
+    private cacheStroke(stroke: Stroke) {
+        const index = this._strokes.length;
+        const { x: horizontalPoints, y: verticalPoints } = stroke.indexedPoints;
+
+        const { width: cellWidth, height: cellHeight } = this._cellSize;
+
+        const minX = Math.min(...horizontalPoints);
+        const minY = Math.min(...verticalPoints);
+        const maxX = Math.max(...horizontalPoints);
+        const maxY = Math.max(...verticalPoints);
+
+        const width = maxX - minX;
+        const height = maxY - minY;
+
+        const minCol = Math.floor(minX / cellWidth);
+        const minRow = Math.floor(minY / cellHeight);
+        const maxCol = Math.floor(maxX / cellWidth);
+        const maxRow = Math.floor(maxY / cellHeight);
+
+        const colCount = this._project.canvasSize.width / cellWidth;
+
+        for (let row = minRow; row <= maxRow; row++) {
+            for (let col = minCol; col <= maxCol; col++) {
+                const _index = col + (row * colCount);
+
+                this._globalChunk[_index] ??= [];
+                this._globalChunk[_index].push(index);
+            }
+        }
+
+        this._context.strokeStyle = 'blue';
+        this._context.strokeRect(minX, minY, width, height);
+
+        console.log(this._globalChunk);
     }
 }

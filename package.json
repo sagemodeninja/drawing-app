@@ -4,6 +4,7 @@
   "description": "",
   "main": "dist/index.js",
   "scripts": {
+    "build": "webpack build --mode=development",
     "start": "webpack serve --mode=development"
   },
   "author": "Gary Antier <contact@garyantier.com> (https://garyantier.com)",
